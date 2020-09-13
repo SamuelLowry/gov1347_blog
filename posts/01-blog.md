@@ -4,7 +4,9 @@
 Which states are/have been battleground states? Which are no longer?
 
 <center>
+
 ![equation](../figures/equation.png)
+
 </center>
 
 ![swing1](../figures/swing1.png)
