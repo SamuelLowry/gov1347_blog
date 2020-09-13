@@ -11,4 +11,4 @@ Which states are/have been battleground states? Which are no longer?
 
 ![flip1](../figures/flip1.png)
 
-![flip2](../figures/flip1.png)
+![flip2](../figures/flip2.png)
