@@ -49,7 +49,7 @@ plot_usmap(data = swing1_df, regions = "states", values = "swing") +
     name = "Vote Swing") +
   facet_wrap(facets = year ~.) +
   labs(title = "Change in Proportion of Presidential Popular Vote",
-       subtitle = "In comparison to the previous election (1952-1976)",
+       subtitle = "For the Democratic candidate in comparison to the previous election (1952-1976)",
        caption = "*Gray states denote missing data") +
   theme_void() +
   theme(plot.title = element_text(face = "bold"))
@@ -67,7 +67,7 @@ plot_usmap(data = swing2_df, regions = "states", values = "swing") +
     name = "Vote Swing") +
   facet_wrap(facets = year ~.) +
   labs(title = "Change in Proportion of Presidential Popular Vote",
-       subtitle = "In comparison to the previous election (1980-2016)") +
+       subtitle = "For the Democratic candidate in comparison to the previous election (1980-2016)") +
   theme_void() +
   theme(plot.title = element_text(face = "bold"))
 
@@ -116,3 +116,10 @@ ggsave("figures/flip1.png")
 
 #ggsave as a png for my md
 ggsave("figures/flip2.png")
+
+#figuring out what states flipped the most
+mostflips_df <- flip_df %>% 
+  filter(flip %in% c("Flipped R", "Flipped D")) %>% 
+  group_by(state) %>% 
+  summarize(flips = n()) %>% 
+  arrange(desc(flips))
