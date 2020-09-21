@@ -100,19 +100,23 @@ statecombined_df <- popvote_df %>%
   select(year, state, unemployment, vote)
 
 #state model using unemployment to predict incumbent vote
-state_model <- lm(data = statecombined_df, vote ~ state:unemployment)
+state_model <- statecombined_df %>% 
+  group_by(state) %>% 
+  nest() %>% 
+  mutate(models = map(data, ~lm(vote ~ unemployment, data = .x))) %>% 
+  mutate(coefs = map(models, ~coef(.x))) %>% 
+  mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>% 
+  mutate(slope = map_dbl(coefs, ~pluck(.x, "unemployment"))) %>% 
+  select(state, intercept, slope)
 
 #prediction data frame based upon pre corona too
-statepred_df <- tibble(state = local2020_df$state, vote = predict(state_model, local2020_df)) %>% 
-  mutate(win = ifelse(vote > 50, "yes", "no"))
+statepred_df <- state_model %>% 
+  right_join(local2020_df) %>% 
+  mutate(pred = intercept + slope*unemployment) %>% 
+  mutate(win = ifelse(pred > 50, "yes", "no"))
 
-#prediction data frame based upon only corona numbers
-coronastatepred_df <- tibble(state = local2020_df$state, vote = predict(state_model, coronastate_df)) %>% 
-  mutate(win = ifelse(vote > 50, "yes", "no"))
-
-statecombined_df %>% 
-  ggplot(aes(x = unemployment, y = vote)) +
-  geom_point() +
-  geom_smooth(method = 'lm') +
-  facet_wrap(~state)
-
+#prediction data frame based upon pre corona too
+statepred_df <- state_model %>% 
+  right_join(coronastate_df) %>% 
+  mutate(pred = intercept + slope*unemployment) %>% 
+  mutate(win = ifelse(pred > 50, "yes", "no"))
