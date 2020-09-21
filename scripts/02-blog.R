@@ -72,8 +72,8 @@ nationalcombined_df %>%
        subtitle = "In the Presidential Election",
        x = "Election Year Unemployment Rate",
        y = "Incumbent Party Percent of Two Party Vote") +
-  theme(plot.title = element_text(face = "bold", size = 16),
-        plot.subtitle = element_text(size = 14))
+  theme(plot.title = element_text(face = "bold", size = 20),
+        plot.subtitle = element_text(size = 16))
 
 #ggsave as a png for my md
 ggsave("figures/national.png")
