@@ -15,7 +15,7 @@ The whole point of this exercise was to look look at the states. Therefore, the 
 
 ![](../figures/corona.png)
 
-Just like with the national vote, I wanted to take COVID-19 into account. Therefore, again, I made a prediction using just unemployment data from the height of the pandemic. This turned many battleground states blue, but I sum this up to mere coincidence. Unemployment, especially at the n-value levels we are working with, is not a reliable predictor on its own. Predicting the 2020 election required much more sophisticated models which I look forward to learning more about. 
+Just like with the national vote, I wanted to take COVID-19 into account. Therefore, again, I made a prediction using just unemployment data from the height of the pandemic. This turned many battleground states blue, but I sum this up to mere coincidence. Unemployment, especially at the n-value levels we are working with, is not a reliable predictor on its own. Predicting the 2020 election requires much more sophisticated models which I look forward to learning more about. 
 
 <br>
 
