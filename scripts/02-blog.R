@@ -1,6 +1,8 @@
 #needed libraries
 library(tidyverse)
 library(janitor)
+library(usmap)
+
 
 #loading in csvs and cleaned names
 #also got rid of all years that don't have unemployment data
@@ -63,8 +65,18 @@ nationalcombined_df %>%
   ggplot(aes(x = unemployment, y = vote)) +
   geom_point() +
   geom_smooth(method = 'lm', se = FALSE) +
-  geom_text(aes(label = year))
+  geom_text(aes(label = year), hjust = .02) +
+  #xlim just so that 2012 doesnt get cut off
+  xlim(3, 8.3) +
+  labs(title = "Incumbent Party Vote and Election Year Unemployment",
+       subtitle = "In the Presidential Election",
+       x = "Election Year Unemployment Rate",
+       y = "Incumbent Party Percent of Two Party Vote") +
+  theme(plot.title = element_text(face = "bold"))
 
+#ggsave as a png for my md
+ggsave("figures/national.png")
+  
 #cleaning local_df
 #used below to figure out what areas would technically be double counted for the vote
 #unique(local_df$state_and_area) 
@@ -113,10 +125,35 @@ state_model <- statecombined_df %>%
 statepred_df <- state_model %>% 
   right_join(local2020_df) %>% 
   mutate(pred = intercept + slope*unemployment) %>% 
-  mutate(win = ifelse(pred > 50, "yes", "no"))
+  mutate(win = ifelse(pred > 50, "Trump", "Biden"))
 
 #prediction data frame based upon pre corona too
-statepred_df <- state_model %>% 
+coronastatepred_df <- state_model %>% 
   right_join(coronastate_df) %>% 
   mutate(pred = intercept + slope*unemployment) %>% 
-  mutate(win = ifelse(pred > 50, "yes", "no"))
+  mutate(win = ifelse(pred > 50, "Trump", "Biden"))
+
+#Shapefile of states from usmap library
+states_map <- usmap::us_map()
+
+#prediction map with all 2020 data
+plot_usmap(data = statepred_df,regions = "states", values = "win", color = "white") +
+  scale_fill_manual(values = c("blue", "red"), name = "Predicted Outcome") +
+  labs(title = "Using Unemployment to Predict 2020 Election",
+       subtitle = "Based on 2020 average unemployment") +
+  theme_void() +
+  theme(plot.title = element_text(face = "bold"))
+
+#ggsave as a png for my md
+ggsave("figures/state.png", height = 4, width = 6)
+
+#prediction map for corona
+plot_usmap(data = coronastatepred_df,regions = "states", values = "win", color = "white") +
+  scale_fill_manual(values = c("blue", "red"), name = "Predicted Outcome") +
+  labs(title = "Using Unemployment to Predict 2020 Election",
+       subtitle = "Based on COVID-19 unemployment") +
+  theme_void() +
+  theme(plot.title = element_text(face = "bold"))
+
+#ggsave as a png for my md
+ggsave("figures/corona.png", height = 4, width = 6)
