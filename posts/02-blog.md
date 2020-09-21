@@ -2,7 +2,9 @@
 ## September 13, 2020
 
 I must preface this blog by saying that using the election year unemployment rate alone is a thoroughly terrible way to predict the upcoming presidential election. My work proves such.
+
 <br>
+
 Following the third prompt, I set out to build a predictive model for 2020 by using unemployment data at the state level. Of course, I first had to create a simple national model as a point of comparison. Through some data wrangling, I was able to create a data frame which included a column for year, unemployment rate as a percent, and the incumbent party candidate's percent of the two party vote. I plotted the points below and added the years to the points in order to display the elections. I also added a linear model trend line. As you can see, the points are more so a cloud than anything else. The R-squared is laughably low at 0.00045. Merely for readability, I added limits to the x-axis to bump the maximum slightly higher than 8 percent so that "2012" would show up.
 
 ![](../figures/national.png)
