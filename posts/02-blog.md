@@ -1,5 +1,5 @@
 # Unemployment as a Predictor
-## September 13, 2020
+## September 20, 2020
 
 I must preface this blog by saying that using the election year unemployment rate alone is a thoroughly terrible way to predict the upcoming presidential election. My work proves such.
 
