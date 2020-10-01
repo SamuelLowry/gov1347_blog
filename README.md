@@ -5,3 +5,5 @@ Welcome to my election analysis blog for Gov 1347 at Harvard College (Fall 2020)
 ## [1) Swing States](posts/01-blog.md)
 
 ## [2) Unemployment as a Predictor](posts/02-blog.md)
+
+## [3) Polling](posts/03-blog.md)
