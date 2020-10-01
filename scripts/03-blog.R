@@ -83,7 +83,7 @@ chal_plot <- chal_fund_df %>%
   theme_minimal() +
   labs(title = "Fundamentals Model for the Challenger",
        x = "Percent Second Quarter GDP Growth",
-       y = "Popular Vote")
+       y = "Percent of Popular Vote")
 
 inc_plot <- inc_fund_df %>% 
   ggplot(aes(x = gdp_growth_qt, y = pv)) +
@@ -94,7 +94,7 @@ inc_plot <- inc_fund_df %>%
   theme_minimal() +
   labs(title = "Fundamentals Model for the Incumbent",
        x = "Percent Second Quarter GDP Growth",
-       y = "Popular Vote")
+       y = "Percent of Popular Vote")
 
 #put them together
 plot_grid(inc_plot, chal_plot)
