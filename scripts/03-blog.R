@@ -4,7 +4,9 @@ library(janitor)
 library(usmap)
 library(ggthemes)
 library(cowplot)
-
+library(lubridate)
+library(survey)
+library(gt)
 
 #loading in csvs and cleaned names
 econ_df <- read_csv("data/econ.csv") %>% 
@@ -37,27 +39,31 @@ grade_16_plot <- grade_16_df %>%
   ggplot(aes(x = x538_grade)) +
   geom_bar(fill = 'darkblue') +
   theme_minimal() +
-  labs(title = "Pollster Grade 2016",
+  labs(title = "Pollster Grades 2016",
        x = "Grade",
        y = "Count",
-       caption = "Source: FiveThirtyEight")
+       caption = "Source: FiveThirtyEight") +
+  theme(plot.title = element_text(face = "bold", size = 24), 
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16))
 
 grade_20_plot <- grade_20_df %>% 
   ggplot(aes(x = x538_grade)) +
   geom_bar(fill = 'darkblue') +
   theme_minimal() +
-  labs(title = "Pollster Grade 2020",
+  labs(title = "Pollster Grades 2020",
        x = "Grade",
        y = "Count",
-       caption = "Source: FiveThirtyEight")
+       caption = "Source: FiveThirtyEight") +
+  theme(plot.title = element_text(face = "bold", size = 24), 
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16))
 
 #put them together
 plot_grid(grade_16_plot, grade_20_plot)
 
 #saved for blog
 ggsave("figures/grade_plot.png", height = 6, width = 12)
-  
-  
 
 #segmented data for the challenger for fundamentals model
 chal_fund_df <- econ_df %>% 
@@ -79,25 +85,213 @@ chal_plot <- chal_fund_df %>%
   geom_point(alpha = 0) +
   geom_text(aes(label = year)) +
   geom_smooth(method = 'lm', 
-              se = FALSE) +
+              se = FALSE,
+              color = "darkblue") +
   theme_minimal() +
   labs(title = "Fundamentals Model for the Challenger",
        x = "Percent Second Quarter GDP Growth",
-       y = "Percent of Popular Vote")
+       y = "Percent of Popular Vote") +
+  theme(plot.title = element_text(face = "bold", size = 20), 
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16))
 
 inc_plot <- inc_fund_df %>% 
   ggplot(aes(x = gdp_growth_qt, y = pv)) +
   geom_point(alpha = 0) +
   geom_text(aes(label = year)) +
   geom_smooth(method = 'lm', 
-              se = FALSE) +
+              se = FALSE,
+              color = "darkblue") +
   theme_minimal() +
   labs(title = "Fundamentals Model for the Incumbent",
        x = "Percent Second Quarter GDP Growth",
-       y = "Percent of Popular Vote")
+       y = "Percent of Popular Vote") +
+  theme(plot.title = element_text(face = "bold", size = 20), 
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16))
 
 #put them together
 plot_grid(inc_plot, chal_plot)
 
 #saved for blog
 ggsave("figures/fund_plot.png", height = 6, width = 12)
+
+recent_poll_plot <- polls_2020_df %>% 
+  filter(stage == "general",
+         candidate_name %in% c("Joseph R. Biden Jr.", "Donald Trump")) %>%
+  filter(is.na(state)) %>% 
+  drop_na(fte_grade) %>% 
+  filter(fte_grade != c("D", "F")) %>% 
+  mutate(weight = case_when(fte_grade %in% c("A+", "A", "A-", "A/B") ~ 3,
+                            fte_grade %in% c("B+", "B", "B-", "B/C") ~ 2,
+                            fte_grade %in% c("C+", "C", "C-", "C/D") ~ 1)) %>% 
+  mutate(end_date = mdy(end_date),
+         election_date = mdy(election_date)) %>% 
+  mutate(days_out = as.duration(interval(end_date, election_date)) / (60*60*24)) %>% 
+  filter(days_out <= 59) %>% 
+  ggplot(aes(x = end_date, y = pct, color = candidate_name)) +
+  geom_jitter() +
+  geom_smooth(method = 'lm', se = FALSE) +
+  scale_color_manual(values=c("darkred", "darkblue")) +
+  theme_minimal() +
+  labs(title = "Presidential Election Polls",
+       subtitle = "From September 2020",
+       x = "Date",
+       y = "Percent",
+       color = "Candidate") +
+  theme(plot.title = element_text(face = "bold", size = 24),
+        plot.subtitle = element_text(size = 20),
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16))
+
+old_poll_plot <- polls_2020_df %>% 
+  filter(stage == "general",
+         candidate_name %in% c("Joseph R. Biden Jr.", "Donald Trump")) %>%
+  filter(is.na(state)) %>% 
+  drop_na(fte_grade) %>% 
+  filter(fte_grade != c("D", "F")) %>% 
+  mutate(weight = case_when(fte_grade %in% c("A+", "A", "A-", "A/B") ~ 3,
+                            fte_grade %in% c("B+", "B", "B-", "B/C") ~ 2,
+                            fte_grade %in% c("C+", "C", "C-", "C/D") ~ 1)) %>% 
+  mutate(end_date = mdy(end_date),
+         election_date = mdy(election_date)) %>% 
+  mutate(days_out = as.duration(interval(end_date, election_date)) / (60*60*24)) %>% 
+  filter(days_out <= 365) %>% 
+  ggplot(aes(x = end_date, y = pct, color = candidate_name)) +
+  geom_jitter() +
+  geom_smooth(method = 'lm', se = FALSE) +
+  scale_color_manual(values=c("darkred", "darkblue")) +
+  theme_minimal() +
+  labs(title = "Presidential Election Polls",
+       subtitle = "From a year out",
+       x = "Month",
+       y = "Percent",
+       color = "Candidate") +
+  theme(plot.title = element_text(face = "bold", size = 24),
+        plot.subtitle = element_text(size = 20),
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16))
+
+#Put them together
+plot_grid(old_poll_plot, recent_poll_plot)
+
+#saved for blog
+ggsave("figures/poll_comp_plot.png", height = 6, width = 12)
+
+poll_pred_df <- polls_2020_df %>% 
+  filter(stage == "general",
+         candidate_name %in% c("Joseph R. Biden Jr.", "Donald Trump")) %>%
+  filter(is.na(state)) %>% 
+  drop_na(fte_grade) %>% 
+  filter(fte_grade != c("D", "F")) %>% 
+  mutate(weight = case_when(fte_grade %in% c("A+", "A", "A-", "A/B") ~ 3,
+                            fte_grade %in% c("B+", "B", "B-", "B/C") ~ 2,
+                            fte_grade %in% c("C+", "C", "C-", "C/D") ~ 1)) %>% 
+  mutate(end_date = mdy(end_date),
+         election_date = mdy(election_date)) %>% 
+  mutate(days_out = as.duration(interval(end_date, election_date)) / (60*60*24)) %>% 
+  filter(days_out <= 59) %>%
+  mutate(weighted_pct = (weight/sum(weight) * pct)) %>%
+  group_by(candidate_name) %>%
+  summarize(sum = sum(weighted_pct * 2))
+
+corona_df <- econ_df %>% 
+  filter(year == 2020,
+         quarter == 2) %>% 
+  select(gdp_growth_qt)
+
+inc_fund_model <- lm(formula = pv ~ gdp_growth_qt, data = inc_fund_df)
+trump_fund_pred <- as.data.frame(predict(inc_fund_model, corona_df,
+                 interval = "prediction", 
+                 level=0.95)) %>% 
+  mutate(se = (upr - fit) / 1.96) %>%
+  mutate(type = "Trump Fundamentals")
+  
+
+chal_fund_model <- lm(formula = pv ~ gdp_growth_qt, data = chal_fund_df)
+biden_fund_pred <- as.data.frame(predict(chal_fund_model,
+                 corona_df,
+                 interval = "prediction", 
+                 level=0.95)) %>%
+  mutate(se = (upr - fit) / 1.96) %>% 
+  mutate(type = "Biden Fundamentals")
+  
+weighted_trump_df <- polls_2020_df %>% 
+  filter(stage == "general",
+         candidate_name %in% c("Joseph R. Biden Jr.", "Donald Trump")) %>%
+  filter(is.na(state)) %>% 
+  drop_na(fte_grade) %>% 
+  filter(fte_grade != c("D", "F")) %>% 
+  mutate(weight = case_when(fte_grade %in% c("A+", "A", "A-", "A/B") ~ 3,
+                            fte_grade %in% c("B+", "B", "B-", "B/C") ~ 2,
+                            fte_grade %in% c("C+", "C", "C-", "C/D") ~ 1)) %>% 
+  mutate(end_date = mdy(end_date),
+         election_date = mdy(election_date)) %>% 
+  mutate(days_out = as.duration(interval(end_date, election_date)) / (60*60*24)) %>% 
+  filter(days_out <= 59) %>% 
+  filter(candidate_name == "Donald Trump")
+
+trump_poll_pred <- svydesign(id = ~1, weights = ~weight, data = weighted_trump_df)
+
+trump_poll_pred <- svymean(~pct, trump_poll_pred)
+
+trump_poll_pred <- tibble(fit = 41.999,
+                          se = 0.1607) %>% 
+  mutate(upr = (1.96 * se) + fit,
+         lwr = fit - (1.96 * se)) %>%
+  mutate(type = "Trump Poll")
+
+weighted_biden_df <- polls_2020_df %>% 
+  filter(stage == "general",
+         candidate_name %in% c("Joseph R. Biden Jr.", "Donald Trump")) %>%
+  filter(is.na(state)) %>% 
+  drop_na(fte_grade) %>% 
+  filter(fte_grade != c("D", "F")) %>% 
+  mutate(weight = case_when(fte_grade %in% c("A+", "A", "A-", "A/B") ~ 3,
+                            fte_grade %in% c("B+", "B", "B-", "B/C") ~ 2,
+                            fte_grade %in% c("C+", "C", "C-", "C/D") ~ 1)) %>% 
+  mutate(end_date = mdy(end_date),
+         election_date = mdy(election_date)) %>% 
+  mutate(days_out = as.duration(interval(end_date, election_date)) / (60*60*24)) %>% 
+  filter(days_out <= 59) %>% 
+  filter(candidate_name == "Joseph R. Biden Jr.")
+  
+biden_poll_pred <- svydesign(id = ~1, weights = ~weight, data = weighted_biden_df)
+
+biden_poll_pred <- svymean(~pct, biden_poll_pred)
+
+biden_poll_pred <- tibble(fit = 50.717,
+                          se = 0.1878) %>% 
+  mutate(upr = (1.96 * se) + fit,
+         lwr = fit - (1.96 * se)) %>%
+  mutate(type = "Biden Poll")
+
+biden_comb_pred <- tibble(fit = ((.87 * biden_poll_pred$fit[1]) + (.13 * biden_fund_pred$fit[1])),
+                          se = sqrt((.87 * biden_poll_pred$se[1])^2 + (.13 * biden_fund_pred$se[1])^2)) %>% 
+  mutate(upr = (1.96 * se) + fit,
+         lwr = fit - (1.96 * se)) %>%
+  mutate(type = "Biden Ensemble")
+
+trump_comb_pred <- tibble(fit = ((.87 * trump_poll_pred$fit[1]) + (.13 * trump_fund_pred$fit[1])),
+                          se = sqrt((.87 * trump_poll_pred$se[1])^2 + (.13 * trump_fund_pred$se[1])^2)) %>% 
+  mutate(upr = (1.96 * se) + fit,
+         lwr = fit - (1.96 * se)) %>%
+  mutate(type = "Trump Ensemble")
+
+estimate_df <- rbind(trump_fund_pred, biden_fund_pred, trump_poll_pred, biden_poll_pred, trump_comb_pred, biden_comb_pred)
+
+estimate_df <- estimate_df[, c(5, 1, 2, 3, 4)]
+
+estimate_table <- estimate_df %>% 
+  gt() %>% 
+  tab_header(
+    title = "Percent of Populate Vote Estimates",
+    subtitle = "2020 Presidential Election") %>% 
+  cols_label(
+    type ="Model Type",
+    fit = "Point Estimate",
+    lwr = "Lower Bound",
+    upr = "Upper Bound",
+    se = "Standard Error") %>% 
+  tab_source_note(source_note = md("Showing 95% confidence intervals"))
+

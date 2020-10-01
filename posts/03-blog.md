@@ -7,11 +7,15 @@
 
 <br>
 
+![](../figures/poll_comp_plot.png)
+
+<br>
+
 ![](../figures/fund_plot.png)
 
 <br>
 
-![](../figures/poll_comp_plot.png)
+![](../figures/estimate.png)
 
 <br>
 
