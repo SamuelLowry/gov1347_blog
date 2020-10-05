@@ -209,6 +209,7 @@ corona_df <- econ_df %>%
 
 #model for trump with confidence intervals, fundamentals
 inc_fund_model <- lm(formula = pv ~ gdp_growth_qt, data = inc_fund_df)
+
 trump_fund_pred <- as.data.frame(predict(inc_fund_model, corona_df,
                  interval = "prediction", 
                  level=0.95)) %>% 
