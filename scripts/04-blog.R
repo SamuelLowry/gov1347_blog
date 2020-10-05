@@ -174,5 +174,47 @@ plot_usmap(data = map_df, regions = "states", values = "award_percap") +
 #save the map
 ggsave("figures/grant_map.png", height = 6, width = 10)
 
+#model with confidence intervals, fundamentals
+gdp_model <- lm(formula = pv ~ gdp_growth_qt*incumbent, data = fund_df)
+unemployment_model <- lm(formula = pv ~ unemployment*incumbent, data = fund_df)
 
-        
+#2020 candidates
+cand_df <- tibble(candidate = c("Trump", "Biden"),
+                  incumbent = c("Incumbent", "Challenger")) %>% 
+  mutate(year = 2020) 
+
+#2020 economic data
+corona_df <- econ_df %>% 
+  filter(quarter == 2,
+         year == 2020) %>% 
+  left_join(cand_df) %>% 
+  mutate(incumbent = factor(incumbent,
+                            levels = c("Incumbent", "Challenger")))
+
+#predition and formatting
+fund_pred <- as.data.frame(predict(gdp_model, corona_df,
+                                         interval = "prediction", 
+                                         level = 0.95)) %>% 
+  rbind(as.data.frame(predict(unemployment_model, corona_df,
+                              interval = "prediction", 
+                              level=0.95))) %>% 
+  mutate(Model = c("GDP", "GDP", "Unemployment", "Unemployment")) %>% 
+  mutate(Candidate = c("Trump", "Biden", "Trump", "Biden")) %>% 
+  rename(Point = fit,
+         Upper = upr,
+         Lower = lwr)
+
+#reordered columns using this link for reference http://www.sthda.com/english/wiki/reordering-data-frame-columns-in-r
+fund_pred <- fund_pred[, c(5, 4, 1, 2, 3)] 
+
+#made estimate gt table using this link for reference https://gt.rstudio.com/articles/intro-creating-gt-tables.html
+estimate_table <- fund_pred %>% 
+  gt() %>% 
+  tab_header(
+    title = "Percent of Populate Vote Estimates",
+    subtitle = "2020 Presidential Election") %>% 
+  tab_source_note(source_note = md("Showing 95% confidence intervals")) %>% 
+  #formatted numbers using this link https://gt.rstudio.com/reference/fmt_number.html
+  fmt_number(decimals = 2,
+             columns = 3:5)
+estimate_table

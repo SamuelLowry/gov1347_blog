@@ -1,7 +1,7 @@
 # Incumbency
 ## October 4, 2020
 
-This week I investigated the variation in pollster quality. Then, using FiveThirtyEight's grading system, I created a model predicting the 2020 presidential election which also included a component based upon GDP growth. A key takeaway from this week was that **COVID-19 has made reliance on fundamental economic factors unreliable.**
+This week I set out to discover if Trump being the incumbent will help of hinder his chances of reelection. Unlike past weeks investigated the variation in pollster quality. Then, using FiveThirtyEight's grading system, I created a model predicting the 2020 presidential election which also included a component based upon GDP growth. A key takeaway from this week was that **COVID-19 has made reliance on fundamental economic factors unreliable.**
 
 <br>
 
@@ -14,6 +14,9 @@ It is clear that 2020's polls are not doing as well in school as 2016's. That is
 ![](../figures/unemployment_plot.png)
 
 Aside from poll grades, poll timing also plays a significant role. As noted by [Jennings et al. (2020)](https://www-sciencedirect-com.ezp-prod1.hul.harvard.edu/science/article/pii/S0169207019302572), polls become more predictive the closer to the election they take place. Here, on the left, are all of the polls for the general election since November 2019. We see a divergence with Biden gaining (obviously influenced by him becoming the Democratic nominee) and Trump losing ground (in part due to the COVID-19). On the right, though, polls have more or less settled and are largely consistent on average during the month of September. Keeping this in mind, I did not use any polls prior to September 2020 in my model in line with the findings of [Jennings et al. (2020).](https://www-sciencedirect-com.ezp-prod1.hul.harvard.edu/science/article/pii/S0169207019302572) 
+<br>
+
+![](../figures/incumbency_pred.png)
 
 <br>
 
