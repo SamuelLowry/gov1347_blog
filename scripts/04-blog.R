@@ -54,7 +54,7 @@ fund_df %>%
   labs(title = "Association with GDP Growth",
        x = "Percent Second Quarter GDP Growth",
        y = "Percent of Popular Vote") +
-  theme(plot.title = element_text(face = "bold", size = 35), 
+  theme(plot.title = element_text(face = "bold", size = 30), 
         axis.title.x = element_text(size = 20),
         axis.title.y = element_text(size = 20)) +
   facet_wrap(~ incumbent)
@@ -74,7 +74,7 @@ fund_df %>%
   labs(title = "Association with Unemployment",
        x = "Second Quarter Unemployment Rate",
        y = "Percent of Popular Vote") +
-  theme(plot.title = element_text(face = "bold", size = 35), 
+  theme(plot.title = element_text(face = "bold", size = 30), 
         axis.title.x = element_text(size = 20),
         axis.title.y = element_text(size = 20)) +
   facet_wrap(~ incumbent)
@@ -133,7 +133,7 @@ grants_df %>%
   labs(title = "Association with Change in Grant Spending",
        x = "Percent Change in Federal Grant Spending",
        y = "Percent of Two Party Vote Share") +
-  theme(plot.title = element_text(face = "bold", size = 35), 
+  theme(plot.title = element_text(face = "bold", size = 30), 
         axis.title.x = element_text(size = 20),
         axis.title.y = element_text(size = 20)) +
   facet_wrap(~ incumbent)
@@ -169,7 +169,7 @@ plot_usmap(data = map_df, regions = "states", values = "award_percap") +
   scale_fill_gradient(low = "white", high = "red", name = "Award Per Capita", trans = 'log10') +
   theme_void() +
   labs(title = "Total COVID-19 Related Grants Per Capita") +
-  theme(plot.title = element_text(face = "bold", size = 20))
+  theme(plot.title = element_text(face = "bold", size = 30))
 
 #save the map
 ggsave("figures/grant_map.png", height = 6, width = 10)
