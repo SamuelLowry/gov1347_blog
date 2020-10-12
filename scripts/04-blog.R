@@ -169,7 +169,7 @@ plot_usmap(data = map_df, regions = "states", values = "award_percap") +
   scale_fill_gradient(low = "white", high = "red", name = "Award Per Capita", trans = 'log10') +
   theme_void() +
   labs(title = "Total COVID-19 Related Grants Per Capita") +
-  theme(plot.title = element_text(face = "bold", size = 40))
+  theme(plot.title = element_text(face = "bold", size = 30))
 
 #save the map
 ggsave("figures/grant_map.png", height = 6, width = 10)
