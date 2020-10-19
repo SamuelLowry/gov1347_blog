@@ -4,7 +4,7 @@ library(ggthemes)
 library(usmap)
 library(maptools)
 library(janitor)
-library(cowplot)
+library(lubridate)
 
 # This week's blog is largely a modification of the lab code applied to Michigan
 # loading in csvs and data cleaning
@@ -17,6 +17,21 @@ poll_pvstate_vep_df <- pvstate_df %>%
   inner_join(pollstate_df %>%  filter(weeks_left == 5)) %>% 
   left_join(vep_df)
 
+#polls for sd of polls
+polls_16_df <- read_csv("data/polls_2016.csv") %>% 
+  filter(state == "Michigan")
+
+polls_dem20_df <- read_csv("data/polls_2020.csv") %>% 
+  filter(state == "Michigan") %>% 
+  mutate(end_date = mdy(end_date)) %>% 
+  filter(end_date < as.Date("2020-02-21")) %>% 
+  filter(candidate_name == "Joseph R. Biden Jr.")
+
+polls_rep20_df <- read_csv("data/polls_2020.csv") %>% 
+  filter(state == "Michigan") %>% 
+  mutate(end_date = mdy(end_date)) %>% 
+  filter(end_date < as.Date("2020-02-21"))%>% 
+  filter(candidate_name == "Donald Trump")
 
 # VEP used for both 2016 and 2020 due to no 2020 data
 VEP_MI <- as.integer(vep_df$VEP[vep_df$state == "Michigan" & vep_df$year == 2016])
@@ -24,9 +39,9 @@ VEP_MI <- as.integer(vep_df$VEP[vep_df$state == "Michigan" & vep_df$year == 2016
 #https://public.opendatasoft.com/explore/dataset/usa-2016-presidential-election-by-county/table/?disjunctive.state&sort=-african_american_population
 county_df <-read_csv("data/usa-2016-presidential-election-by-county.csv") %>% 
   clean_names() %>% 
-  mutate(dem_wm_2012 = democrats_2012 - 50,
-         dem_wm_2016 = democrats_2016 - 50,
-         rep_wm_2016 = republicans_2016 - 50)
+  mutate(dem_wm_2012 = democrats_2012/(democrats_2012 + Republicans_2012),
+         dem_wm_2016 = democrats_2016/(democrats_2016 + Republicans_2016),
+         rep_wm_2016 = republicans_2016/(democrats_2016 + Republicans_2016))
 
 
 field_df <- read_csv("data/fieldoffice_2012-2016_byaddress.csv")
@@ -67,7 +82,7 @@ plot_usmap(regions = "counties",
              stroke=2)+
   scale_fill_gradient2(
     high = "blue", mid = "white", low = "red",
-    name = "Dem\nwin margin") + 
+    name = "Dem Win Margin \n Two Party Vote") + 
   labs(title = "Field Offices and Win Margin",
        subtitle = "Obama 2012",
        caption = "Total Field Offices: 28") +
@@ -95,7 +110,7 @@ plot_usmap(regions = "counties",
              stroke=2)+
   scale_fill_gradient2(
     high = "blue", mid = "white", low = "red",
-    name = "Dem\nwin margin") + 
+    name = "Dem Win Margin \n Two Party Vote") + 
   labs(title = "Field Offices and Win Margin",
        subtitle = "Clinton 2016",
        caption = "Total Field Offices: 27") +
@@ -124,7 +139,7 @@ plot_usmap(regions = "counties",
              stroke=2)+
   scale_fill_gradient2(
     high = "red", mid = "white", low = "blue",
-    name = "Rep\nwin margin") + 
+    name = "Rep Win Margin \n Two Party Vote") + 
   labs(title = "Field Offices and Win Margin",
        subtitle = "Trump 2016",
        caption = "Total Field Offices: 22") +
@@ -139,8 +154,6 @@ ggsave(filename = "figures/trump_mi.png",
        height = 6,
        width = 6)
 
-
-
 # Simulating a distribution of election results for Michigan 2020
 MI_R <- poll_pvstate_vep_df %>%
   filter(state=="Michigan",
@@ -148,7 +161,7 @@ MI_R <- poll_pvstate_vep_df %>%
   mutate(prob_poll = avg_poll/100)
 
 #sd for poll dist
-SD_R <- sd(MI_R$prob_poll)
+SD_R <- sd(polls_rep20_df$pct)/100
 
 
 MI_D <- poll_pvstate_vep_df %>%
@@ -157,7 +170,7 @@ MI_D <- poll_pvstate_vep_df %>%
   mutate(prob_poll = avg_poll/100)
 
 #sd for poll dist
-SD_D <- sd(MI_D$prob_poll)
+SD_D <- sd(polls_dem20_df$pct)/100
 
 # Trump and Biden models
 MI_R_glm <- glm(cbind(R, VEP-R) ~ avg_poll, MI_R, family = binomial)
@@ -200,11 +213,11 @@ margin_df %>%
              color = "black",
              size = 1.3) +
   scale_y_continuous(trans = "sqrt",
-                     breaks = c(0, 100 , 500, 1000, 1500, 2000)) +
-  scale_x_continuous(breaks = c(-50, -25, 0, 25, 50)) +
-  geom_text(aes(x = 60,
-            y = 500, 
-            label = "Biden Median: \n 3.4%")) +
+                    breaks = c(0, 100 , 500, 1000, 1500, 2000)) +
+  scale_x_continuous(breaks = c(-30, -20, -10, 0, 10, 20, 30)) +
+  geom_text(aes(x = 29,
+            y = 700, 
+            label = "Biden Median: \n 3.25%")) +
   labs(title = "Prediction of Win Margins",
        subtitle = "Michigan 2020 based on March 4 Poll Numbers",
        x = "Win Margin",
@@ -230,7 +243,7 @@ LOO_MI_R <- poll_pvstate_vep_df %>%
   mutate(prob_poll = avg_poll/100)
 
 #now include sd
-LOO_SD_R <- sd(LOO_MI_R$prob_poll)
+LOO_SD_R <- sd(polls_16_df$adjpoll_trump)/100
 
 
 LOO_MI_D <- poll_pvstate_vep_df %>%
@@ -240,7 +253,7 @@ LOO_MI_D <- poll_pvstate_vep_df %>%
   mutate(prob_poll = avg_poll/100)
 
 #now include sd
-LOO_SD_D <- sd(LOO_MI_D$prob_poll)
+LOO_SD_D <- sd(polls_16_df$adjpoll_clinton)/100
 
 # LOO models for 2016 both candidates
 LOO_MI_R_glm <- glm(cbind(R, VEP-R) ~ avg_poll, LOO_MI_R, family = binomial)
@@ -267,9 +280,9 @@ sim_elxns_MI_2016 %>%
                  color = 'white',
                  fill = "red") +
   # .23% actual win margin https://en.wikipedia.org/wiki/2016_United_States_presidential_election_in_Michigan
-  geom_text(x = 55,
+  geom_text(x = 5,
             y = 1000, 
-            label = "Predicted: -8.84% \n Actual : 0.23% \n Chance of Winning: 30.8%") +
+            label = "Predicted: -8.92% \n Actual : 0.23% \n Chance of Winning: 6.42%") +
   labs(title = "Leave One Out Prediction \n of Trump Win Margin",
        subtitle = "Michigan 2016",
        x = "Win Margin",
@@ -281,7 +294,12 @@ sim_elxns_MI_2016 %>%
         axis.title.y = element_text(size = 15)) +
   theme(plot.subtitle = element_text(size = 15)) +
   theme(plot.caption = element_text(size = 10)) +
-  scale_x_continuous(breaks = c(-50, -25, 0, 25, 50))
+  scale_x_continuous(breaks = c(-30, -20, -10, 0, 10, 20))
 
 #save plot
 ggsave("figures/updated_LOO_pred.png", height = 6, width = 6)
+
+#scrap work
+sim_elxns_MI_2016 %>% 
+  mutate(m = if_else(margin > 0, TRUE, FALSE)) %>% 
+  summarize(mean(m))
