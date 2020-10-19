@@ -12,4 +12,4 @@ Welcome to my election analysis blog for Gov 1347 at Harvard College (Fall 2020)
 
 ## [5) The Air War](posts/05-blog.md)
 
-## [5) The Ground Game](posts/06-blog.md)
+## [6) The Ground Game](posts/06-blog.md)
