@@ -25,7 +25,8 @@ VEP_MI <- as.integer(vep_df$VEP[vep_df$state == "Michigan" & vep_df$year == 2016
 county_df <-read_csv("data/usa-2016-presidential-election-by-county.csv") %>% 
   clean_names() %>% 
   mutate(dem_wm_2012 = democrats_2012 - 50,
-         dem_wm_2016 = democrats_2016 - 50)
+         dem_wm_2016 = democrats_2016 - 50,
+         rep_wm_2016 = republicans_2016 - 50)
 
 
 field_df <- read_csv("data/fieldoffice_2012-2016_byaddress.csv")
@@ -42,11 +43,17 @@ clinton_df <- field_df %>%
   subset(year == 2016 & candidate == "Clinton" & state == "MI") %>%
   select(longitude, latitude)
 
+#Trump field office
+trump_df <- field_df %>% 
+  subset(year == 2016 & candidate == "Trump" & state == "MI") %>%
+  select(longitude, latitude)
+
 #transform for map
 obama_field_transformed_df <- usmap_transform(obama_df)
 clinton_field_transformed_df <- usmap_transform(clinton_df)
+trump_field_transformed_df <- usmap_transform(trump_df)
 
-#clinton and obama map comparison with vote share
+#obama map comparison with vote share
 plot_usmap(regions = "counties",
            data = county_df,
            values = "dem_wm_2012",
@@ -100,6 +107,35 @@ plot_usmap(regions = "counties",
 
 #save plot
 ggsave(filename = "figures/clinton_mi.png",
+       height = 6,
+       width = 6)
+
+#trump map comparison with vote share
+plot_usmap(regions = "counties",
+           data = county_df,
+           values = "rep_wm_2016",
+           include = c("MI"))+
+  geom_point(data = trump_field_transformed_df,
+             aes(x = longitude.1, y = latitude.1),
+             color = "green3",
+             alpha = 0.75,
+             pch=3,
+             size=4,
+             stroke=2)+
+  scale_fill_gradient2(
+    high = "red", mid = "white", low = "blue",
+    name = "Rep\nwin margin") + 
+  labs(title = "Field Offices and Win Margin",
+       subtitle = "Trump 2016",
+       caption = "Total Field Offices: 22") +
+  theme(plot.title = element_text(size = 25, face = "bold")) +
+  theme(plot.subtitle = element_text(size = 20)) +
+  theme(legend.title = element_text(size = 15),
+        legend.text = element_text(size = 10)) +
+  theme(plot.caption = element_text(size = 15))
+
+#save plot
+ggsave(filename = "figures/trump_mi.png", 
        height = 6,
        width = 6)
 
