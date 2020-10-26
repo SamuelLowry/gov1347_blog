@@ -3,7 +3,6 @@
 
 Continuing my trend of being a tried and true Michigander, this week I updated my probabilistic simulation of the race in Michigan. Next, I used those numbers along with historic field office location and county two party vote share data to make recommendations to both the Trump and Biden Campaigns in regard to their ground game.
 
-<br>
 ![](../figures/death.png)
 
 Instead of the probability of the binomial distribution of voters being based solely upon the median prediction, I utilized a normal distribution created by using the median prediction and the standard deviation of all polls preceding the given date. This produced a more realistic distribution and takes into account the differences between polls. I again performed leave-one-out cross-validation in order to assess the validity of the model. I removed the 2016 data from the model and predicted the 2016 election using [FiveThirtyEight's poll averages from 2016](https://projects.fivethirtyeight.com/2016-election-forecast/michigan/). I used the poll averages from October 18, 2016, as to simulate a prediction from four years ago today. The leave-one-out model predicted that Trump would lose by about nine percent in 2016—consistent with predictions at the time. In actuality, Trump won by 0.23 percent.
@@ -12,7 +11,6 @@ Instead of the probability of the binomial distribution of voters being based so
 
 It is no surprise that a leave-one-out cross-validation of 2016 is far from the actual value. Nevertheless, this distribution actually gave Trump about a six percent chance of winning—[last week's](https://samuellowry.github.io/gov1347_blog/posts/05-blog.html) didn't give him a chance at all. The inclusion of poll standard deviation improved the predictive power of the model substantially. 
 
-<br>
 
 ![](../figures/test.png)
 
@@ -22,7 +20,6 @@ Switching gears, I imagined that I worked for the Trump or Biden campaign and th
 
 Well, first I have to figure out where the candidates stand. I am a fan of Nate Silver, so I rely on polls heavily. A binomial distribution will give me a general idea of point and variance, so I create the two models, one for each party, predicting the probability of voting for the given party by using [current poll averages from FiveThirtyEight]( https://projects.fivethirtyeight.com/polls/president-general/michigan/). Then, I make two distributions, one for each party, by repeatedly drawing voters from the voting eligible population based upon the predictions using the aforementioned models. The process also now utilizes a probability distribution based upon the standard deviation of poll estimates. By taking the difference of the two distributions, I can predict win margins. I adjust the y-axis using a square root scale in order to best see the distribution. Biden is up by just over three percent.
 
-<br>
 
 ![](../figures/LOO_table.png)
 

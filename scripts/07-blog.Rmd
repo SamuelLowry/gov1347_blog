@@ -7,12 +7,13 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+#needed packages
 library(tidyverse)
 library(lubridate)
 library(janitor)
 library(ggthemes)
 library(gt)
-library(webshot)
 ```
 
 ```{r}
@@ -31,9 +32,11 @@ library(webshot)
 #   mutate(state = state.abb[match(state,state.name)]) %>% 
 #   drop_na(state)
 
+#Trump poll data
 trump_polls_df <- read_csv("../data/polls_2020.csv") %>% 
   filter(candidate_name == "Donald Trump",
          stage == "general") %>% 
+  #get abbreviation for merging
   mutate(state = state.abb[match(state, state.name)]) %>% 
     drop_na(state) %>%
   mutate(date = mdy(end_date)) %>% 
@@ -44,17 +47,20 @@ trump_polls_df <- read_csv("../data/polls_2020.csv") %>%
 # data source: https://covidtracking.com/about-data
 covid_df <- read_csv("../data/all-states-history.csv") %>% 
   select(state, date, deathIncrease, totalTestsViralIncrease) %>% 
+  #make it by 100 tests instead of 1
   mutate(totalTestsViralIncrease = totalTestsViralIncrease/100) %>% 
   right_join(trump_polls_df) %>% 
    #https://stackoverflow.com/questions/40581705/group-dates-by-week-in-r
 mutate(week = cut.Date(date, breaks = "1 week", labels = FALSE)) %>% 
   group_by(state, week) %>% 
   nest() %>% 
+  #creating means by week
   mutate(week_death_increase = map_dbl(data, ~ sum(.$deathIncrease)),
          week_test_increase = map_dbl(data, ~ sum(.$totalTestsViralIncrease)),
          weekafter_avg_pct = map_dbl(data, ~mean(.$pct))) %>% 
   unnest()
 
+#death df
 death_df <- covid_df %>% 
   #dropping all NAs as to not screw up models
   drop_na(week_death_increase) %>% 
@@ -67,6 +73,7 @@ death_df <- covid_df %>%
   filter(n > 9) %>% 
   unnest()
 
+#test df
 test_df <- covid_df %>% 
   #dropping all NAs as to not screw up models
   drop_na(week_test_increase) %>% 
@@ -78,12 +85,14 @@ test_df <- covid_df %>%
          change = map_dbl(data, ~sum(.$week_test_increase))) %>% 
   #rule of thumb, need at least 10 observations
   filter(n > 9,
+         #if there are states with all zeros the model doesnt work
          change > 0) %>% 
   unnest(cols = everything())
   
 ```
 
 ```{r}
+#created model
 death_mdl <- death_df %>% 
   group_by(state) %>% 
   nest() %>% 
@@ -92,8 +101,10 @@ death_mdl <- death_df %>%
   mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>% 
   mutate(slope = map_dbl(coefs, ~pluck(.x, "week_death_increase"))) %>% 
   select(state, intercept, slope) %>% 
+  #need to signify what model
   mutate(type = "1 Death")
 
+#created model
 test_mdl <- test_df %>% 
   group_by(state) %>% 
   nest() %>% 
@@ -102,13 +113,19 @@ test_mdl <- test_df %>%
   mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>% 
   mutate(slope = map_dbl(coefs, ~pluck(.x, "week_test_increase"))) %>% 
   select(state, intercept, slope) %>% 
+  #need to signify what model
   mutate(type = "100 Tests")
 
+#bind for visualization
 mdl_df <- rbind(death_mdl, test_mdl)
 ```
 
 ```{r}
+#plots 
+
+#death plot
 death_df %>% 
+  #back to names
   mutate(state = state.name[match(state, state.abb)]) %>% 
   ggplot(aes(x = week_death_increase, y = weekafter_avg_pct)) +
   geom_point() +
@@ -127,9 +144,10 @@ death_df %>%
   theme(plot.subtitle = element_text(size = 15),
         strip.text = element_text(colour = 'black')) 
 
+#save plot
 ggsave("../figures/death.png")
 
-
+#test plot
 test_df %>% 
   mutate(state = state.name[match(state, state.abb)]) %>% 
   ggplot(aes(x = week_test_increase, y = weekafter_avg_pct)) +
@@ -149,9 +167,11 @@ test_df %>%
   theme(plot.subtitle = element_text(size = 15),
         strip.text = element_text(colour = 'black')) 
 
+#save plot
 ggsave("../figures/test.png")
 
 
+#model plot
 mdl_df %>% 
   ggplot(aes(x = slope, y = intercept, color = type)) +
   geom_point(alpha = 0) +
@@ -170,15 +190,19 @@ mdl_df %>%
   theme(legend.title = element_text(size = 13),
         legend.text = element_text(size = 11))
 
+#saved
 ggsave("../figures/covidmodel.png")
 
 
 ```
 
 ```{r}
+
+#LOO for both
 LOOdeath_mdl <- death_df %>% 
   group_by(state) %>% 
   nest() %>%
+  #take out random row-ish
   mutate(data = map(data, ~.[-c(7), ])) %>% 
   mutate(models = map(data, ~lm(weekafter_avg_pct ~ week_death_increase, data = .x))) %>% 
   mutate(coefs = map(models, ~coef(.x)))%>% 
@@ -190,6 +214,7 @@ LOOdeath_mdl <- death_df %>%
 LOOtest_mdl <- test_df %>% 
   group_by(state) %>% 
   nest() %>% 
+    #take out random row-ish
   mutate(data = map(data, ~.[-c(7), ])) %>% 
   mutate(models = map(data, ~lm(weekafter_avg_pct ~ week_test_increase, data = .x))) %>% 
   mutate(coefs = map(models, ~coef(.x))) %>% 
@@ -201,6 +226,7 @@ LOOtest_mdl <- test_df %>%
 LOO_death_df <- death_df %>% 
   group_by(state) %>% 
   nest() %>%
+  #collect row for testing
   mutate(data = map(data, ~ slice(., 7))) %>% 
   unnest() %>% 
   right_join(LOOdeath_mdl) %>% 
@@ -211,6 +237,7 @@ LOO_death_df <- death_df %>%
 LOO_test_df <- test_df %>% 
   group_by(state) %>% 
   nest() %>%
+    #collect row for testing
   mutate(data = map(data, ~ slice(., 7))) %>% 
   unnest() %>% 
   right_join(LOOtest_mdl) %>% 
@@ -218,6 +245,7 @@ LOO_test_df <- test_df %>%
          dif = pred - pct) %>% 
   select(state,  dif)
 
+#datawrangling for table
 LOO_df <- left_join(LOO_death_df, LOO_test_df,
                     by = "state") %>% 
   arrange(dif.y) %>% 
@@ -232,6 +260,7 @@ LOO_df <- cbind(LOO_df, LOO2_df)
 ```
 
 ```{r}
+#gt table
 LOO_df %>% 
   gt() %>% 
   tab_header(
