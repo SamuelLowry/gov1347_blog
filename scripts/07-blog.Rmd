@@ -1,5 +1,5 @@
 ---
-title: "Lab"
+title: "The Effect of COVID"
 author: "Samuel Lowry"
 date: "10/21/2020"
 output: html_document
@@ -8,15 +8,246 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(lubridate)
+library(janitor)
+library(ggthemes)
+library(gt)
+library(webshot)
 ```
 
 ```{r}
-cv_df <- read_csv("all-states-history.csv")
+#pivot for row with every year and state 
+#format state names to abbreviations
+#https://www.kaggle.com/hassenmorad/historical-state-populations-19002017 data from here
+#no longer needed
 
-polls_df <- read_csv("polls_2020.csv") %>% 
+# statepops_df <- read_csv("../data/state_pops.csv") %>% 
+#   pivot_longer(cols = !Year) %>% 
+#   rename(state = name,
+#          pop_mil = value) %>%
+#   clean_names() %>% 
+#   mutate(state = str_to_title(state)) %>% 
+#   filter(year == 2017) %>% 
+#   mutate(state = state.abb[match(state,state.name)]) %>% 
+#   drop_na(state)
+
+trump_polls_df <- read_csv("../data/polls_2020.csv") %>% 
   filter(candidate_name == "Donald Trump",
          stage == "general") %>% 
   mutate(state = state.abb[match(state, state.name)]) %>% 
-    drop_na(state)
+    drop_na(state) %>%
+  mutate(date = mdy(end_date)) %>% 
+  # lag date a week that way we get polls from a week after to compare the numbers from (to get reaction)
+  mutate(date = date - days(7)) %>% 
+  select(state, date, pct)
+  
+# data source: https://covidtracking.com/about-data
+covid_df <- read_csv("../data/all-states-history.csv") %>% 
+  select(state, date, deathIncrease, totalTestsViralIncrease) %>% 
+  mutate(totalTestsViralIncrease = totalTestsViralIncrease/100) %>% 
+  right_join(trump_polls_df) %>% 
+   #https://stackoverflow.com/questions/40581705/group-dates-by-week-in-r
+mutate(week = cut.Date(date, breaks = "1 week", labels = FALSE)) %>% 
+  group_by(state, week) %>% 
+  nest() %>% 
+  mutate(week_death_increase = map_dbl(data, ~ sum(.$deathIncrease)),
+         week_test_increase = map_dbl(data, ~ sum(.$totalTestsViralIncrease)),
+         weekafter_avg_pct = map_dbl(data, ~mean(.$pct))) %>% 
+  unnest()
+
+death_df <- covid_df %>% 
+  #dropping all NAs as to not screw up models
+  drop_na(week_death_increase) %>% 
+  filter(week_death_increase >= 0) %>% 
+  group_by(state) %>% 
+  nest() %>% 
+  #https://stackoverflow.com/questions/43787663/how-to-count-rows-in-nested-data-frames-with-dplyr
+  mutate(n = map_dbl(data, nrow)) %>% 
+  #rule of thumb, need at least 10 observations
+  filter(n > 9) %>% 
+  unnest()
+
+test_df <- covid_df %>% 
+  #dropping all NAs as to not screw up models
+  drop_na(week_test_increase) %>% 
+  filter(week_test_increase >= 0) %>% 
+  group_by(state)%>% 
+  nest() %>% 
+  #https://stackoverflow.com/questions/43787663/how-to-count-rows-in-nested-data-frames-with-dplyr
+  mutate(n = map_dbl(data, nrow),
+         change = map_dbl(data, ~sum(.$week_test_increase))) %>% 
+  #rule of thumb, need at least 10 observations
+  filter(n > 9,
+         change > 0) %>% 
+  unnest(cols = everything())
+  
+```
+
+```{r}
+death_mdl <- death_df %>% 
+  group_by(state) %>% 
+  nest() %>% 
+  mutate(models = map(data, ~lm(weekafter_avg_pct ~ week_death_increase, data = .x))) %>% 
+  mutate(coefs = map(models, ~coef(.x)))%>% 
+  mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>% 
+  mutate(slope = map_dbl(coefs, ~pluck(.x, "week_death_increase"))) %>% 
+  select(state, intercept, slope) %>% 
+  mutate(type = "1 Death")
+
+test_mdl <- test_df %>% 
+  group_by(state) %>% 
+  nest() %>% 
+  mutate(models = map(data, ~lm(weekafter_avg_pct ~ week_test_increase, data = .x))) %>% 
+  mutate(coefs = map(models, ~coef(.x))) %>% 
+  mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>% 
+  mutate(slope = map_dbl(coefs, ~pluck(.x, "week_test_increase"))) %>% 
+  select(state, intercept, slope) %>% 
+  mutate(type = "100 Tests")
+
+mdl_df <- rbind(death_mdl, test_mdl)
+```
+
+```{r}
+death_df %>% 
+  mutate(state = state.name[match(state, state.abb)]) %>% 
+  ggplot(aes(x = week_death_increase, y = weekafter_avg_pct)) +
+  geom_point() +
+  facet_wrap(~ state) +
+  geom_smooth(method = "lm",
+              se = FALSE) +
+  scale_x_continuous(trans = "log2") +
+  labs(title = "Trump's Polling Averages by State",
+       subtitle = "Associated with COVID Deaths",
+       x = "Previous Week's COVID Deaths",
+       y = "Current Poll Average") +
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = 20), 
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15)) +
+  theme(plot.subtitle = element_text(size = 15),
+        strip.text = element_text(colour = 'black')) 
+
+ggsave("../figures/death.png")
+
+
+test_df %>% 
+  mutate(state = state.name[match(state, state.abb)]) %>% 
+  ggplot(aes(x = week_test_increase, y = weekafter_avg_pct)) +
+  geom_point() +
+  facet_wrap(~ state) +
+  geom_smooth(method = "lm",
+              se = FALSE) +
+  scale_x_continuous(trans = "log10") +
+  labs(title = "Trump's Polling Averages by State",
+       subtitle = "Associated with COVID Test Volume",
+       x = "Previous Week's COVID Tests (in hundreds)",
+       y = "Current Poll Average") +
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = 20), 
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15)) +
+  theme(plot.subtitle = element_text(size = 15),
+        strip.text = element_text(colour = 'black')) 
+
+ggsave("../figures/test.png")
+
+
+mdl_df %>% 
+  ggplot(aes(x = slope, y = intercept, color = type)) +
+  geom_point(alpha = 0) +
+  geom_text(aes(label = state)) +
+  scale_color_manual(values = c("red", "blue")) +
+    labs(title = "Models of the Effects of COVID-19",
+       subtitle = "On Trump's Polling Averages by State",
+       x = "Slope",
+       y = "Intercept (Trump's Poll Average)",
+       color = "Effect of The \n Addition of") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 20), 
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 13)) +
+  theme(plot.subtitle = element_text(size = 15)) +
+  theme(legend.title = element_text(size = 13),
+        legend.text = element_text(size = 11))
+
+ggsave("../figures/covidmodel.png")
+
 
 ```
+
+```{r}
+LOOdeath_mdl <- death_df %>% 
+  group_by(state) %>% 
+  nest() %>%
+  mutate(data = map(data, ~.[-c(7), ])) %>% 
+  mutate(models = map(data, ~lm(weekafter_avg_pct ~ week_death_increase, data = .x))) %>% 
+  mutate(coefs = map(models, ~coef(.x)))%>% 
+  mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>% 
+  mutate(slope = map_dbl(coefs, ~pluck(.x, "week_death_increase"))) %>% 
+  select(state, intercept, slope) %>% 
+  mutate(type = "1 Death")
+
+LOOtest_mdl <- test_df %>% 
+  group_by(state) %>% 
+  nest() %>% 
+  mutate(data = map(data, ~.[-c(7), ])) %>% 
+  mutate(models = map(data, ~lm(weekafter_avg_pct ~ week_test_increase, data = .x))) %>% 
+  mutate(coefs = map(models, ~coef(.x))) %>% 
+  mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>% 
+  mutate(slope = map_dbl(coefs, ~pluck(.x, "week_test_increase"))) %>% 
+  select(state, intercept, slope) %>% 
+  mutate(type = "100 Tests")
+
+LOO_death_df <- death_df %>% 
+  group_by(state) %>% 
+  nest() %>%
+  mutate(data = map(data, ~ slice(., 7))) %>% 
+  unnest() %>% 
+  right_join(LOOdeath_mdl) %>% 
+  mutate(pred = intercept + slope*week_death_increase,
+         dif = pred - pct) %>% 
+  select(state, dif)
+
+LOO_test_df <- test_df %>% 
+  group_by(state) %>% 
+  nest() %>%
+  mutate(data = map(data, ~ slice(., 7))) %>% 
+  unnest() %>% 
+  right_join(LOOtest_mdl) %>% 
+  mutate(pred = intercept + slope*week_test_increase,
+         dif = pred - pct) %>% 
+  select(state,  dif)
+
+LOO_df <- left_join(LOO_death_df, LOO_test_df,
+                    by = "state") %>% 
+  arrange(dif.y) %>% 
+  head(8)
+
+LOO2_df <- left_join(LOO_death_df, LOO_test_df,
+                    by = "state") %>% 
+  arrange(dif.y) %>% 
+  tail(8)
+
+LOO_df <- cbind(LOO_df, LOO2_df)
+```
+
+```{r}
+LOO_df %>% 
+  gt() %>% 
+  tab_header(
+    title = md("**Leave One Out Cross Validation**"),
+    subtitle = md("**On COVID Models**")
+  ) %>%
+  cols_label(
+    state...1 = md("**State**"),
+    dif.x...2 = html("1 Death Error"),
+    dif.y...3 = html("100 Test Error"),
+    state...4 = md("**State**"),
+    dif.x...5 = html("1 Death Error"),
+    dif.y...6 = html("100 Test Error")
+  ) %>% 
+  tab_source_note(
+    source_note = "Data fromatted side by side for visualization purposes"
+  )
+```
+
