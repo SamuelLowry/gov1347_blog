@@ -1,0 +1,22 @@
+---
+title: "Lab"
+author: "Samuel Lowry"
+date: "10/21/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+cv_df <- read_csv("all-states-history.csv")
+
+polls_df <- read_csv("polls_2020.csv") %>% 
+  filter(candidate_name == "Donald Trump",
+         stage == "general") %>% 
+  mutate(state = state.abb[match(state, state.name)]) %>% 
+    drop_na(state)
+
+```
