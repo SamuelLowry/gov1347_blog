@@ -15,3 +15,6 @@ Welcome to my election analysis blog for Gov 1347 at Harvard College (Fall 2020)
 ## [6) The Ground Game](posts/06-blog.md)
 
 ## [7) The Effect of COVID](posts/07-blog.md)
+
+## [8) Final Election Prediction](posts/08-blog.md)
+
