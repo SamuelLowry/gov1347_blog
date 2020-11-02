@@ -1,5 +1,13 @@
-# The Effect of COVID
-## October 25, 2020
+# Final Election Prediction
+## November 1, 2020
+
+(1) model formula (or procedure for obtaining prediction), 
+(2) model description and justification, 
+(3) coefficients (if using regression) and/or weights (if using ensemble), 
+(4) interpretation of coefficients and/or justification of weights, 
+(5) model validation (recommended to include both in-sample and out-of-sample performance unless it is impossible due to the characteristics of model and related data availability), 
+(6) uncertainty around prediction (e.g. predictive interval)
+(7) graphic(s) showing your prediction
 
 In 2017, Achen and Bartel famously wrote about the effects of shark attacks on elections in their book entitled [*Democracy For Realists*](https://hollis.harvard.edu/primo-explore/fulldisplay?docid=TN_cdi_askewsholts_vlebooks_9781400888740&context=PC&vid=HVD2&search_scope=everything&tab=everything&lang=en_US). Such pursuits, on their face, appear trivial. How would shark attacks affect election outcomes? Why is that even a question worth asking? When thinking more broadly, it becomes clear. Natural disasters, despite their randomness, necessitate political action. For example, [Healy et al. (2020)](https://hollis.harvard.edu/primo-explore/fulldisplay?docid=TN_cdi_crossref_primary_10_1561_100_00009057&context=PC&vid=HVD2&search_scope=everything&tab=everything&lang=en_US) looks at instances of tornadoes. Depending on the political response (state of emergency, aid, etc.), the incumbent's vote share was affected. Therefore, as the random necessitates action, it becomes political.
 
