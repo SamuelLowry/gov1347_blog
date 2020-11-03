@@ -19,6 +19,7 @@ library(jtools)
 library(caret)
 library(huxtable)
 library(gt)
+library(readxl)
 ```
 
 Poll by state
@@ -145,6 +146,7 @@ national_polls_df <- polls_df %>%
 national_polls_df <- national_polls_df[rep(seq(nrow(national_polls_df)), national_polls_df$weight),]
 #sd of .109 for both Biden and Trump from earlier
 
+#work for binomial model
 vep_df <- read_csv("../data/vep_1980-2016.csv") %>% 
   filter(state == "United States")
 
@@ -226,7 +228,7 @@ biden_pct <- median(biden_elxns_2020$pct)
 #together for hist
 votes_df <- full_join(biden_elxns_2020, trump_elxns_2020)
 
-#histograms of win margins
+#histograms of pop vote
 votes_df %>% 
   ggplot(aes(x = pct,
              fill = Candidate)) +
@@ -260,12 +262,15 @@ ggsave("../figures/national_vote.png", height = 5, width = 7)
 Iowa, Ohio, Arizona, Texas, North Carolina, Georgia, Florida. 
 
 ```{r}
+#model work for toss up states
+
 toss_ups <- c("Iowa", "Ohio", "Arizona", "Texas", "North Carolina", "Georgia", "Florida")
 
 gdp2020 <- tibble(year = 2020,
                   quarter = 3,
                   GDP_growth_qt = 33.1)
 
+#economic q3 gdp
 economy_df <- read_csv("../data/econ.csv") %>% 
   filter(quarter == 3,
          year > 1947) %>% 
@@ -274,6 +279,7 @@ economy_df <- read_csv("../data/econ.csv") %>%
 economy_df <- rbind(economy_df, gdp2020) %>% 
   drop_na()
 
+#unemployment 
 local_df <- read_csv("../data/local.csv") %>% 
   clean_names() %>% 
   rename(state = state_and_area) %>%
@@ -284,6 +290,7 @@ local_df <- read_csv("../data/local.csv") %>%
 popvotestate_df <- read_csv("../data/popvote_bystate_1948-2016.csv") %>% 
   clean_names()
 
+#national polls
 historic_polls_df <- read_csv("../data/pollavg_bystate_1968-2016.csv")%>% 
   filter(before_convention == FALSE) %>% 
   group_by(candidate_name, state, year) %>% 
@@ -305,7 +312,7 @@ historic_polls_df <- read_csv("../data/pollavg_bystate_1968-2016.csv")%>%
                                candidate == "Ronald Reagan" ~ "Reagan, Ronald",
                                candidate == "Mitt Romney" ~ "Romney, Mitt",
                                candidate == "Donald Trump" ~ "Trump, Donald J."))
-
+#data with polls
 poll_model_df <- popvotestate_df %>% 
   left_join(popvote_df) %>% 
   left_join(economy_df) %>% 
@@ -318,6 +325,7 @@ poll_model_df <- popvotestate_df %>%
   mutate(incumbent = as.character(incumbent),
          incumbent_party = as.character(incumbent_party))
 
+#data without polls
 model_df <- popvotestate_df %>% 
   left_join(popvote_df) %>% 
   left_join(economy_df) %>% 
@@ -331,6 +339,7 @@ model_df <- popvotestate_df %>%
 Model Creation
 
 ```{r}
+#a bunch of possible models 
 
 #poll_avg
 model_1 <- poll_model_df %>% 
@@ -684,6 +693,7 @@ model_32 <- poll_model_df %>%
          rmse = map(loo, ~ .x$RMSE),
          model_no = 32)
 
+#putting them together for analysis
 models <- rbind(model_1, 
                 model_2,
                 model_3,
@@ -721,6 +731,7 @@ models <- rbind(model_1,
 #1 and 4 are just poll based
 #9 and 12 unemployment based
 
+#pulling out best ones for state
 models <- models %>% 
   mutate(rsquared = as.numeric(rsquared),
          rmse = as.numeric(rmse),
@@ -728,6 +739,7 @@ models <- models %>%
   group_by(state) %>% 
   top_n(1, out)
 
+#state models for predictions
 fl_df <- poll_model_df %>% 
   filter(state == "Florida")
 fl_mod <- train(pv ~ poll_avg + party + incumbent + incumbent_party, 
@@ -762,12 +774,8 @@ tx_df <- poll_model_df %>%
   filter(state == "Texas")
 tx_mod <- train(pv ~ unem_pct + incumbent, 
                  data = tx_df, method = "lm", trControl = trainControl(method = "LOOCV"))
-
-
   
-
-  
-
+#display models
 model_outputs <- export_summs(fl_mod$finalModel, az_mod$finalModel, ga_mod$finalModel, 
                               oh_mod$finalModel, nc_mod$finalModel, ia_mod$finalModel, tx_mod$finalModel,
                               model.names = c("Florida","Arizona","Georgia", "Ohio", "North Carolina", "Iowa", "Texas"),
@@ -778,13 +786,7 @@ model_outputs <- export_summs(fl_mod$finalModel, az_mod$finalModel, ga_mod$final
                        "Incumbent Party" = "incumbent_partyTRUE",
                        "Unemployment Rate" = "unem_pct"),
                        statistics = NULL)
-
-
-models <- models %>% 
-  select(state, rsquared, rmse)
-
-models <- tibble(models)
-
+#display validation
 models %>% 
   gt() %>% 
   tab_header(title = md("**In and Out of Sample Validation**")) %>%
@@ -795,6 +797,7 @@ models %>%
 ```
 
 ```{r}
+#new data for predicitons
 toss_pred_df <- poll_pred %>% 
   filter(state %in% toss_ups) %>% 
   mutate(poll_avg = mean,
@@ -804,6 +807,7 @@ toss_pred_df <- poll_pred %>%
          year = 2020) %>% 
   left_join(local_df)
 
+#state predicitons
 fl_pred <- tibble(pred = predict.train(object = fl_mod, newdata = (toss_pred_df %>% filter(state == "Florida"))),
                   answer = c("Biden", "Trump")) %>% 
   mutate(state = "Florida")
@@ -835,9 +839,10 @@ toss_pred_df <- toss_pred_df %>%
   mutate(new_pred = (mean + pred)/2)
 ```
 
-Win margin plot
+Win maps
 
 ```{r}
+#data cleanng for tossup states
 trump_toss_pred_df <- toss_pred_df %>% 
   filter(answer == "Trump") %>% 
   select(state, new_pred) %>% 
@@ -855,11 +860,13 @@ final_toss_df <- trump_toss_pred_df %>%
   select(-answer_trump, -answer_biden) %>% 
   mutate(dif_trump = mean_trump - mean_biden)
 
+#full data
 main_final_estimate_df <- wide_poll_pred %>% 
   filter(!is.na(state),
          map != "Toss-Up") %>% 
   select(-map)
 
+#put them together for final estimate
 final_estimate_df <- rbind(final_toss_df, main_final_estimate_df) %>% 
   mutate(map = case_when(dif_trump > 10 ~ "Solid Trump",
                          dif_trump > 0 & dif_trump < 10 ~ "Lean Trump",
@@ -884,6 +891,7 @@ model_final_toss_df <- model_trump_toss_pred_df %>%
   select(-answer_trump, -answer_biden) %>% 
   mutate(dif_trump = mean_trump - mean_biden)
 
+#put them together for model estimate
 model_estimate_df <- rbind(model_final_toss_df, main_final_estimate_df) %>% 
    mutate(map = case_when(dif_trump > 10 ~ "Solid Trump",
                          dif_trump > 0 & dif_trump < 10 ~ "Lean Trump",
@@ -929,9 +937,10 @@ ggsave("../figures/final_estimate_plot.png", height = 4.5)
 
 ```
 
-Electoral College
+Electoral College Range
 
 ```{r}
+#full polling data
 ec_polls_df <- pred_df %>% 
   drop_na(state)
 
@@ -951,92 +960,97 @@ popvote_df <- read_csv("../data/popvote_1948-2016.csv")
 historic_polls_df <- historic_polls_df %>% 
   drop_na()
 
+#old data for predicitons
 ec_poll_vep_df <- pvstate_df %>% 
   inner_join(vep_df) %>% 
   left_join(popvote_df) %>% 
   inner_join(historic_polls_df) %>% 
   drop_na() %>% 
   group_by(state) %>% 
+  mutate(D = as.integer(D),
+         R = as.integer(R),
+         VEP = as.integer(VEP)) %>% 
   nest() %>%
-  rename(ec_poll_vep = data)
+  rename(ec_poll_vep = data) 
 
+#this creates simulation all in one huge chunk
 ec_dist_df <- ec_polls_df %>% 
   group_by(state) %>% 
   nest() %>% 
   rename(state_data20 = data) %>% 
   left_join(vep_df %>% filter(year == 2016)) %>% 
+  mutate(VEP = as.integer(VEP)) %>% 
   select(-year, -VAP) %>% 
   left_join(ec_poll_vep_df) %>% 
   mutate(republican_r = map(ec_poll_vep, ~ filter(., party == "republican")),
          republican_r = map(republican_r, ~ mutate(., prob_poll = poll_avg/100))) %>% 
   mutate(democrat_d = map(ec_poll_vep, ~ filter(., party == "democrat")),
          democrat_d = map(democrat_d, ~ mutate(., prob_poll = poll_avg/100))) %>% 
-    mutate(sd_r = map(republican_r, ~ sd(.$prob_poll))) %>% 
-  mutate(sd_d = map(democrat_d, ~ sd(.$prob_poll))) %>% 
+    mutate(sd_r = map_dbl(republican_r, ~ sd(.$prob_poll))) %>% 
+  mutate(sd_d = map_dbl(democrat_d, ~ sd(.$prob_poll))) %>% 
   mutate(r_glm = map(republican_r, ~ glm(cbind(R, VEP-R) ~ poll_avg, .x , family = binomial)),
          d_glm = map(democrat_d, ~ glm(cbind(D, VEP-D) ~ poll_avg, .x , family = binomial))) %>% 
   left_join(final_estimate_df) %>% 
   select(state, VEP, r_glm, d_glm, sd_r, sd_d, mean_trump, mean_biden) %>% 
+  mutate(VEP = as.integer(VEP)) %>% 
   group_by(state) %>% 
   nest() %>%
   mutate(prob_Rvote_2020 = map(data, ~ predict(.$r_glm, newdata = data.frame(poll_avg = .$mean_trump), type="response")[[1]])) %>% 
   mutate(prob_Dvote_2020 = map(data, ~ predict(.$d_glm, newdata = data.frame(poll_avg = .$mean_biden), type="response")[[1]])) %>% 
   unnest() %>%
-  group_by(state) %>% 
-  mutate(r_prob = rnorm(1000, mean = prob_Rvote_2020, sd = sd_r)))
+  mutate(r_prob = map(.x = prob_Rvote_2020, .y = sd_r, ~rnorm(10000, mean = .x, sd = .y))) %>% 
+  mutate(d_prob = map(.x = prob_Dvote_2020, .y = sd_d, ~rnorm(10000, mean = .x, sd = .y))) %>% 
+  select(state, VEP, r_prob, d_prob) %>% 
+  unnest(cols = c(r_prob, d_prob)) %>% 
+  mutate(VEP = as.integer(VEP)) %>% 
+  drop_na() %>% 
+  mutate(sim_Dvotes_2020 = map(.x = d_prob , .y = VEP, ~rbinom(1, size = .y, prob = .x))) %>% 
+  mutate(VEP = as.integer(VEP)) %>% 
+  mutate(sim_Rvotes_2020 = map(.x = r_prob , .y = VEP, ~rbinom(1, size = .y, prob = .x)))
 
-  nest() %>% 
-  ungroup() %>% 
-  mutate(r_prob = map(data, ~ rnorm(1000, mean = .x$prob_Rvote_2020, sd = .x$sd_r)))
+#ec votes
+ec_votes <- read_xlsx("../data/ec_votes.xlsx")
+
+#get simulations
+#lose some due to negative votes—can't happen
+ec_dist_clean_df <- ec_dist_df %>% 
+  mutate(sim_Dvotes_2020 = as.numeric(sim_Dvotes_2020),
+         sim_Rvotes_2020 = as.numeric(sim_Rvotes_2020)) %>% 
+  mutate(winner = if_else(sim_Rvotes_2020 > sim_Dvotes_2020, "Trump", "Biden")) %>% 
+  mutate(n = seq(1:10000)) %>% 
+  left_join(ec_votes) %>% 
+  mutate(biden_votes = if_else(winner == "Biden", votes, 0),
+         trump_votes = if_else(winner == "Trump", votes, 0)) %>% 
+  group_by(n) %>% 
+  summarize(trump_total = sum(trump_votes),
+            biden_total = sum(biden_votes)) %>% 
+  drop_na() %>% 
+  pivot_longer(trump_total:biden_total) %>% 
+  mutate(name = if_else(name == "trump_total", "Trump", "Biden"))
 
 
-  mutate(sim_Rvotes_2020 = map_df(data, ~ rbinom(n = 1000, size = as.integer(.$VEP), prob = rnorm(1000, mean = .$prob_Rvote_2020, sd = .$sd_r))))
-                               
-?map_df
-                               
-sim_Dvotes_2020 <- rbinom(n = 10000, size = VEP, prob = rnorm(10000, mean = prob_Dvote_2020, sd = SD_D))
+#work for chances winning
+ec_dist_clean_df %>% 
+  filter(name == "Trump",
+         value == 269) %>% 
+  nrow()
 
-## Simulating a distribution of election results
-biden_elxns_2020 <- tibble(votes = sim_Dvotes_2020,
-                           VEP = sim_Dvotes_2020+sim_Rvotes_2020) %>%
-  mutate(pct = (votes/VEP)*100,
-         Candidate = "Biden")
-
-trump_elxns_2020 <- tibble(votes = sim_Rvotes_2020,
-                           VEP = sim_Dvotes_2020+sim_Rvotes_2020) %>%
-  mutate(pct = (votes/VEP)*100,
-         Candidate = "Trump")
-
-biden_elxns_2020 %>% 
-  filter(pct > 50) %>% 
-  nrow()/100
-
-trump_elxns_2020 %>% 
-  filter(pct > 50) %>% 
-  nrow()/100
-
-trump_pct <- median(trump_elxns_2020$pct)
-
-biden_pct <- median(biden_elxns_2020$pct)
-
-#together for hist
-votes_df <- full_join(biden_elxns_2020, trump_elxns_2020)
-
-#histograms of win margins
-votes_df %>% 
-  ggplot(aes(x = pct,
-             fill = Candidate)) +
+#histograms for predicitons of electoral college 
+ec_dist_clean_df %>% 
+  ggplot(aes(x = value,
+             fill = name)) +
   geom_histogram(color = 'white',
                  position = "identity",
                  alpha = .7,
                  bins = 20) +
   scale_fill_manual(values = c("blue2", "red2")) +
-  scale_x_continuous(breaks = c(35, 40, 45, 50, 55, 60, 65)) +
-  labs(title = "Prediction of National Popular Vote",
+  labs(title = "Prediction of Electoral College",
        subtitle = "Using historic polling trends and current weighted polls",
-       x = "Popular Vote Percentage",
+       x = "Electoral College Total",
        y = "Count",
-       caption = "10,000 binomial process simulations") +
+       caption = "10,000 binomial process simulations",
+       fill = "Candidate") +
+    scale_x_continuous(breaks = c(100, 150, 200, 250, 300, 350, 400)) +
   theme_minimal() +
   theme(plot.title = element_text(face = "bold", size = 20), 
         axis.title.x = element_text(size = 13),
@@ -1045,12 +1059,12 @@ votes_df %>%
   theme(legend.title = element_text(size = 13, face = "bold"),
         legend.text = element_text(size = 10)) +
   theme(plot.caption = element_text(size = 10)) +
-    geom_text(aes(x = 39,
-            y = 1500, 
-            label = "Biden Win: 88.87%\nTrump Win: 11.13%"))
+    geom_text(aes(x = 110,
+            y = 1300, 
+            label = "Biden Win: 96.2%\nTrump Win: 3.5%\nTie: 0.3%"))
 
 #save plot
-ggsave("../figures/national_vote.png", height = 5, width = 7)
+ggsave("../figures/ec_total.png", height = 5, width = 7)
 ```
 
 
