@@ -35,7 +35,7 @@ The question still remains as to the uncertainty around the prediction. For that
 
 ![](../figures/national_vote.png)
 
-My national popular vote prediction utilizes the same process as my electoral college prediction but instead relies on national polling numbers. Here, Biden wins 88.87 percent of the simulations. **Again, the other 11.13 percent should not be ignored.**
+My national popular vote prediction utilizes the same process as my Electoral College prediction but instead relies on national polling numbers. Here, Biden wins 88.87 percent of the simulations. **Again, the other 11.13 percent should not be ignored.**
 
 
 By all of my models, Biden is slated to win on Tuesday. If he does not, we should become even warier of the validity of polls. This go-around is a test to see if there really have been improvements in the industry since 2016. If not, Nate Silver will have to actually reconsider his model. Nevertheless, no matter how tumultuous the process it takes to finally declare a victor, **I expect Biden to come out on top.**
