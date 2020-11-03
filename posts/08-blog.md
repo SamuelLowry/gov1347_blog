@@ -1,17 +1,7 @@
 # Final Election Prediction
 ## November 1, 2020
 
-(1) model formula (or procedure for obtaining prediction), 
-(2) model description and justification, 
-(3) coefficients (if using regression) and/or weights (if using ensemble), 
-(4) interpretation of coefficients and/or justification of weights, 
-(5) model validation (recommended to include both in-sample and out-of-sample performance unless it is impossible due to the characteristics of model and related data availability), 
-(6) uncertainty around prediction (e.g. predictive interval)
-(7) graphic(s) showing your prediction
-
-"the descriptive evidence suggests coronavirus may influence people's votes, although we can't rule out the alternative"
-
-Just two days ago, FiveThirtyEight's Nate Silver penned the article, ["Trump Can Still Win, But The Polls Would Have To Be Off By Way More Than In 2016"](https://fivethirtyeight.com/features/trump-can-still-win-but-the-polls-would-have-to-be-off-by-way-more-than-in-2016/). My final prediction demonstrates his claim. Only seven states are within five points. Even if Trump won all of them, he would still lose the electoral college. Therefore this election is a battle for the polls. *If Trump wins, my prediction—and predictions of practically the entire industry—will appear even more fraudulent than 2016.* 
+Just two days ago, FiveThirtyEight's Nate Silver penned the article, ["Trump Can Still Win, But The Polls Would Have To Be Off By Way More Than In 2016"](https://fivethirtyeight.com/features/trump-can-still-win-but-the-polls-would-have-to-be-off-by-way-more-than-in-2016/). My final prediction demonstrates his claim. Only seven states are within five points. Even if Trump won all of them, he would still lose the electoral college. Therefore this election is a battle for the polls. **If Trump wins, my prediction—and predictions of practically the entire industry—will appear even more fraudulent than 2016.**
 
 <br>
 
@@ -23,7 +13,7 @@ This map displays my poll-based prediction for every state. I did not include fu
 
 <br>
 
-Nevertheless, merely aggregating all polls would not be prudent. As [G. Elliot Morris](https://gelliottmorris.com) informed our class, SurveyMonkey and its peers are not to be trusted. Therefore, I weighted polls both by their [FiveThirtyEight grade](https://projects.fivethirtyeight.com/pollster-ratings/) and by their recency. I weighted all the A polls to have three times the influence as the C polls and weighted the B polls to have twice the amount of influence. I completely cut out the D and F polls with the exception of states which don't have recent reliable polls. In those cases, I unfortunately had to rely largely upon SurveyMonkey. Thankfully, I only needed to use such polls in states where no reputable pollster is paid to conduct polls—i.e., states that we all know which way they are gonna go. I also cut out all polls prior to the end of the Democratic Convention—75 from the election. I then weighted polls four weeks out from the election twice as much those between 75 and 28 days out and polls two weeks out from the election three times as much. This left me with seven toss-up states: those where the win margin was within five points. 
+Nevertheless, merely aggregating all polls would not be prudent. As [G. Elliot Morris](https://gelliottmorris.com) informed our class, SurveyMonkey and its peers are not to be trusted. Therefore, I weighted polls both by their [FiveThirtyEight grade](https://projects.fivethirtyeight.com/pollster-ratings/) and by their recency. I weighted all the A polls to have three times the influence as the C polls and weighted the B polls to have twice the amount of influence. I completely cut out the D and F polls with the exception of states which do not have recent reliable polls. In those cases, I unfortunately had to rely largely upon SurveyMonkey. Thankfully, I only needed to use such polls in states where no reputable pollster is paid to conduct polls—i.e., states that we all know which way they are going to go. I also cut out all polls prior to the end of the Democratic Convention—75 from the election. I then weighted polls four weeks out from the election twice as much those between 75 and 28 days out and polls two weeks out from the election three times as much. This left me with seven toss-up states: those where the win margin was within five points. 
 
 ![](../figures/final_fit.png)
 
@@ -35,16 +25,24 @@ Even though I included more complex models with interaction, the simpler ones em
 
 ![](../figures/final_models_plot.png)
 
+Subbing in the the model-based predictions for the polls for toss-up states, Iowa, Ohio, Georgia, North Carolina and Texas go for Trump while Arizona and Florida go for Biden.
+
 ![](../figures/final_estimate_plot.png)
 
-In order to evaluate the models, I utilized leave-one-out cross-validation. The datasets were already quite small with some states only having 10 observations. Therefore, I was unable to use out-of-sample testing. To perform the cross-validation, I selected out a row from every state's data and created the respective models. Then, I used the model to predict the poll average for the selected row. By taking the difference between the prediction and the actual, I was able to find the error of the model. The errors are very state dependent, and it should be noted that leaving one out had different effects on different states due to the number of observations by state. The number of observations spanned from 10 to 202. At the same, error is not just dependent on the number of observations. Florida has the largest error and also has a relatively large number of observations at 61. Nevertheless, such an error could be from selecting an outlier row from the data for cross-validation.  
+Utilizing an ensemble evenly split between the models and polls, Georgia and North Carolina become blue. With this equal weighting between the two, which is equivalent to [what FiveThirtyEight does almost 250 days out from the election](https://fivethirtyeight.com/features/how-fivethirtyeights-2020-presidential-forecast-works-and-whats-different-because-of-covid-19/), the map mirrors that which is solely reliant on polls. **Therefore, I predict that Biden will win the Electoral College 350 to 188.**
 
 ![](../figures/ec_total.png)
 
+The question still remains as to the uncertainty around the prediction. For that, I employed probabilistic simulations based upon binomial logistic regression. To further explain the process used to attain this figure, I first created the two models, one for each party, using binomial logistic regression predicting the probability of voting for the given party by using poll averages. Then, I created two distributions, one for each party, by repeatedly drawing voters from the voting eligible population based upon the predictions using the aforementioned models. The attain the necessary variability, I utilized a normal distribution created by using the point estimate and the standard deviation of the polls. By running this process on every state 10 thousand times over and assigning electoral votes to the winner of each simulation, a distribution of possible Electoral College outcomes emerges. The win percentages come from the percent of simulations which have Biden or Trump gaining 270 votes respectively. **While 96.2 percent is a compelling number, the 3.5 percent figure cannot be overlooked. Trump could still win the election.** 
+
 ![](../figures/national_vote.png)
 
-Is an increase in COVID deaths associated with lower poll numbers for Trump? Is an increase in COVID testing associated with higher numbers? **All in all, the jury is still out**. While the Montana, Kentucky, Maine, and Iowa slopes suggest that there is an inverse relationship between COVID deaths and Trump poll numbers, all other slopes hover close to zero including all of those for testing volume. For me to include COVID data in my election prediction, I will have to further tweak my models and determine a more robust relationship. Nevertheless, due to the current lack of a concrete relationship, **I doubt that I will include COVID data for all states within my final prediction model**.
+My national popular vote prediction utilizes the same process as my electoral college prediction but instead relies on national polling numbers. Here, Biden wins 88.87 percent of the simulations. **Again, the other 11.13 percent should not be ignored.**
 
-All of my findings point to the fact that if Biden doesn't win, we shouldn't trust polls anymore.
+<br> 
+
+By all of my models, Biden is slated to win on Tuesday. If he does not, we should become even more wary of the validity of polls. This go around is a test to see if there really have been improvements in the industry since 2016. If not, Nate Silver will have to actually reconsider his model. Nevertheless, no matter how tumultuous the process it takes to finally declare a victor, **I expect Biden to come out on top.**
+
+
 
 *The polling data were sourced from FiveThirtyEight and can be found [here](#https://data.fivethirtyeight.com). All other data was sourced from the course's Canvas page. The code to replicate the above graphics can be found [here](https://github.com/SamuelLowry/gov1347_blog/blob/master/scripts/04-blog.R).*
