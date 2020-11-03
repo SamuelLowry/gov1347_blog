@@ -3,7 +3,6 @@
 
 Just two days ago, FiveThirtyEight's Nate Silver penned the article, ["Trump Can Still Win, But The Polls Would Have To Be Off By Way More Than In 2016"](https://fivethirtyeight.com/features/trump-can-still-win-but-the-polls-would-have-to-be-off-by-way-more-than-in-2016/). My final prediction demonstrates his claim. Only seven states are within five points. Even if Trump won all of them, he would still lose the electoral college. Therefore this election is a battle for the polls. **If Trump wins, my prediction—and predictions of practically the entire industry—will appear even more fraudulent than 2016.**
 
-<br>
 
 Nevertheless, I still had to set out on this journey. First, I utilized purely weighted polling data to predict state outcomes. Second, I attempted to gain more insight by creating models for the remaining seven toss-up states. Third, I used the models with the best in and out of sample validation to predict their outcomes both with and without the addition of the polling estimates. Fourth, I created probabilistic models for the popular vote and the Electoral College to estimate the uncertainty around my predictions. 
 
@@ -11,7 +10,6 @@ Nevertheless, I still had to set out on this journey. First, I utilized purely w
 
 This map displays my poll-based prediction for every state. I did not include fundamentals in my primary prediction for a number of reasons. First, [Nate Silver](https://fivethirtyeight.com/features/how-fivethirtyeights-2020-presidential-forecast-works-and-whats-different-because-of-covid-19/) demonstrates just how volatile of a predictor they can be which was also displayed in [my blog on unemployment](https://samuellowry.github.io/gov1347_blog/posts/02-blog.html)—especially given COVID. Secondly, as noted by [Jennings et al. (2020)](https://www-sciencedirect-com.ezp-prod1.hul.harvard.edu/science/article/pii/S0169207019302572), polls become more predictive the closer to the election they take place which is why at this point in the game [FiveThirtyEight utilizes polls practically exclusively](https://fivethirtyeight.com/features/how-fivethirtyeights-2020-presidential-forecast-works-and-whats-different-because-of-covid-19/).
 
-<br>
 
 Nevertheless, merely aggregating all polls would not be prudent. As [G. Elliot Morris](https://gelliottmorris.com) informed our class, SurveyMonkey and its peers are not to be trusted. Therefore, I weighted polls both by their [FiveThirtyEight grade](https://projects.fivethirtyeight.com/pollster-ratings/) and by their recency. I weighted all the A polls to have three times the influence as the C polls and weighted the B polls to have twice the amount of influence. I completely cut out the D and F polls with the exception of states which do not have recent reliable polls. In those cases, I unfortunately had to rely largely upon SurveyMonkey. Thankfully, I only needed to use such polls in states where no reputable pollster is paid to conduct polls—i.e., states that we all know which way they are going to go. I also cut out all polls prior to the end of the Democratic Convention—75 from the election. I then weighted polls four weeks out from the election twice as much those between 75 and 28 days out and polls two weeks out from the election three times as much. This left me with seven toss-up states: those where the win margin was within five points. 
 
@@ -39,10 +37,8 @@ The question still remains as to the uncertainty around the prediction. For that
 
 My national popular vote prediction utilizes the same process as my electoral college prediction but instead relies on national polling numbers. Here, Biden wins 88.87 percent of the simulations. **Again, the other 11.13 percent should not be ignored.**
 
-<br> 
 
 By all of my models, Biden is slated to win on Tuesday. If he does not, we should become even more wary of the validity of polls. This go around is a test to see if there really have been improvements in the industry since 2016. If not, Nate Silver will have to actually reconsider his model. Nevertheless, no matter how tumultuous the process it takes to finally declare a victor, **I expect Biden to come out on top.**
-
 
 
 *The polling data were sourced from FiveThirtyEight and can be found [here](#https://data.fivethirtyeight.com). All other data was sourced from the course's Canvas page. The code to replicate the above graphics can be found [here](https://github.com/SamuelLowry/gov1347_blog/blob/master/scripts/04-blog.R).*
