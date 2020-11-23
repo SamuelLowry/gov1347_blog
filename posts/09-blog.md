@@ -5,19 +5,19 @@ A recap of your model(s) and your predictions.
 
 A description of the accuracy of the model(s), including any apparent patterns in the accuracy.  Graphics should be used here.
 
+A description of how you might change your model if you were to do it again.  
+
 Proposed hypotheses for why the model(s) were inaccurate in the estimates or locations where it was inaccurate.  These reasons should not simply be statements of about the quality of the components of the model, e.g., “the polls were not good” or “economic growth was not a good predictor” but should instead be grounded hypotheses on why components of the model may not have been predictive or may not have been predictive in certain cases.
 
 Proposed quantitative tests that could test these hypotheses, e.g., what data, if available, could allow you to test whether the reason proposed really did cause the inaccuracy in your model.  If there is no plausible test of the hypothesis, explain why.  You do not need to perform these tests or explain them in great detail (e.g., there is no need to write down an equation showing your exact test), just propose them.  
 
-A description of how you might change your model if you were to do it again.  
-
-Just two days ago, FiveThirtyEight's Nate Silver penned the article, ["Trump Can Still Win, But The Polls Would Have To Be Off By Way More Than In 2016"](https://fivethirtyeight.com/features/trump-can-still-win-but-the-polls-would-have-to-be-off-by-way-more-than-in-2016/). My final prediction demonstrates his claim. Only seven states are within five points. Even if Trump won all of them, he would still lose the Electoral College. Therefore, this election is a battle for the polls. **If Trump wins, my prediction—and predictions of practically the entire industry—will appear even more fraudulent than 2016.**
+At the beginning of my election prediction, I deemed this year the battle of the polls. As Nate Silver wrote right before the election, ["Trump Can Still Win, But The Polls Would Have To Be Off By Way More Than In 2016"](https://fivethirtyeight.com/features/trump-can-still-win-but-the-polls-would-have-to-be-off-by-way-more-than-in-2016/). The polls were still off resulting in surprise Trump victories in Florida and North Carolina as well as nailbiting races in 
 
 
 Nevertheless, I still had to set out on this journey. First, I utilized purely weighted polling data to predict state outcomes. Second, I attempted to gain more insight by creating models for the remaining seven toss-up states. Third, I used the models with the best in and out of sample validation to predict their outcomes both with and without the addition of the polling estimates. Fourth, I created probabilistic models for the popular vote and the Electoral College to estimate the uncertainty around my predictions. 
 
 
-![](../figures/eval_estimate.png)
+![](../figures/eval_estimate_plot.png)
 
 ![](../figures/2020_actual_map.png)
 
