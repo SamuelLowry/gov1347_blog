@@ -19,9 +19,9 @@ Interestingly, when looking solely at my models, I correctly predicted North Car
 
 ![](../figures/swing_eval.png)
 
-Funny enough, 
+Funny enough, the two states that flip-flopped depending on if the prediction was poll or model based had the lowest RMSEs for their respective model out of the toss-up states. Georgia was especially close—being only a quarter of a point off. On the other hand, Florida, the state I consistently predicted incorrectly, had the largest RMSE. My model for Florida already incorporates polling data, and as pundits have pointed out—[polls were unable to properly capture the Cuban vote in Miami](https://www.politico.com/news/2020/11/04/biden-miami-cubans-election-2020-433999). As one of my housemates jokes, "The Miami Cubans are the new white non-college-educated Midwesterners." *Pollsters will promise that they are the final frontier of proper weighting for the next four years.*
 
-![](../figures/final_models.png)
+I have thus far been unable to determine why some of my models were better at predicting the election outcome as compared to others. North Carolina and Georgia did not include polling within their models and have relatively low RMSEs. Nevertheless, Iowa and Texas also did not utilize polling and have much larger RMSEs. A similar trend of claim and counterexample also extends to the in and out of sample validation used in the model selection process as well as the use or lack thereof of other predictive variables. Lastly, **similar to the polls which overestimated Biden's electoral votes, all of my models also underestimated Trump's win margin**.
 
 ![](../figures/RMSE_win_margins.png)
 
@@ -31,15 +31,6 @@ Funny enough,
 
 ![](../figures/final_models.png)
 
-
-
-![](../figures/final_models_plot.png)
-
-Subbing in the new model-based predictions for the polls for toss-up states, Iowa, Ohio, Georgia, North Carolina, and Texas go for Trump while Arizona and Florida go for Biden.
-
-![](../figures/final_estimate_plot.png)
-
-Utilizing an ensemble evenly split between the models and polls, Georgia and North Carolina become blue. Even with this equal weighting between the two, which is equivalent to [what FiveThirtyEight does almost 250 days out from the election](https://fivethirtyeight.com/features/how-fivethirtyeights-2020-presidential-forecast-works-and-whats-different-because-of-covid-19/), the map mirrors that which is solely reliant on polls. **Therefore, I predict that Biden will win the Electoral College 350 to 188.**
 
 
 By all of my models, Biden is slated to win on Tuesday. If he does not, we should become even warier of the validity of polls. This go-around is a test to see if there really have been improvements in the industry since 2016. If not, Nate Silver will have to actually reconsider his model. Nevertheless, no matter how tumultuous the process it takes to finally declare a victor, **I expect Biden to come out on top.**
