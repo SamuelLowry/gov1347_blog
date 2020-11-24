@@ -23,17 +23,17 @@ Funny enough, the two states that flip-flopped depending on if the prediction wa
 
 I have thus far been unable to determine why some of my models were better at predicting the election outcome as compared to others. North Carolina and Georgia did not include polling within their models and have relatively low RMSEs. Nevertheless, Iowa and Texas also did not utilize polling and have much larger RMSEs. A similar trend of claim and counterexample also extends to the in and out of sample validation used in the model selection process as well as the use or lack thereof of other predictive variables. Lastly, **similar to the polls which overestimated Biden's electoral votes, all of my models also underestimated Trump's win margin**.
 
+![](../figures/2020_win_margins.png)
+
+From working with the polling data and from discussion in class, the theory that non toss-up states are more likely to have larger RMSEs has emerged. It makes sense, for those states are less likely to have polls conducted, and those that are conducted tend to be less reliable ([see my discussion of the use of SurveryMonkey from my prediction](https://samuellowry.github.io/gov1347_blog/posts/08-blog.html)). We can see this is being the case, for much of Middle America's support for Trump was underestimated. Nevertheless, counterexamples again exist. Arkansas and Louisiana are solid red states, yet their RMSEs are quite small.  
+
 ![](../figures/RMSE_win_margins.png)
 
-![](../figures/2020_win_margins.png)
+In regard to toss-up states where lots of *reliable* polling occurs, a wide range of RMSEs are seen. Florida was close. Nevertheless, it has one of the largest RMSEs. At the same time, Georgia was extremely close and had a minuscule RMSE. One choice I made based upon Biden's large lead at the time in the polls was to not create additional models for the Rust Belt states. Wisconsin, Michigan, and Pennsylvania all flipped blue as expected, but their RMSEs are also astronomical. It is clear that the post-2016 secret sauce has not fully solved all of polling issues with white non-college-educated Midwesterners. One aside that should be noted is that [New York has yet to count all of the votes which could change the RMSE](https://www.nbcnews.com/politics/2020-elections/new-york-results).
 
 ![](../figures/Trump_voteshare.png)
 
-![](../figures/final_models.png)
-
-
-
-By all of my models, Biden is slated to win on Tuesday. If he does not, we should become even warier of the validity of polls. This go-around is a test to see if there really have been improvements in the industry since 2016. If not, Nate Silver will have to actually reconsider his model. Nevertheless, no matter how tumultuous the process it takes to finally declare a victor, **I expect Biden to come out on top.**
+**The polls yet again consistenly underestimated President Trump.** Only DC and Vermont overestimated his vote share. Even though Biden won as predicted, there should still be a come to Jesus moment for pollsters. A landslide was predicted, yet Biden's victory came down to half a point in a handful of states. *There is a joke that the best election prediction is two points more Republican than whatever Nate Silver's happens to be, and this yet again seems to hold true.*
 
 As to what changes I would make with my model, I should have been more creative and followed in the path of my classmate, [Brendan Chapuis](https://bchaps1999.github.io/2020_election_analytics/posts/final_prediction.html). His model was the most accurate of all of ours—only getting Georgia wrong. What distinguishes his model from many others is the use of prediction markets. As we have read and discussed, both polls and fundamentals have their flaws especially in a year like 2020 with a candidate like Trump. Therefore, instead of trying to correct for those errors, it could be wise to look to a new fount of wisdom. Betting markets force individuals to put their money where their month is which [some have suggested leads to more accuracy](https://www.forbes.com/sites/jimrossi/2020/10/29/election-odds-is-political-betting-more-accurate-than-polling/?sh=73facb3969f8). In addition, I blindly assumed linearity for my variables while Brendan was able to easily show the cubic relationship between betting market prices and vote share and included such within his model. In the future, I would change my model by including betting markets and reassessing linearity. 
 
