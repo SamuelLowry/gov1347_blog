@@ -2,6 +2,8 @@
 
 Welcome to my election analysis blog for Gov 1347 at Harvard College (Fall 2020)! Feel free to reach out to me samlowry@college.harvard.edu if you have any comments or questions.
 
+## [10) Who Flipped Those States?](posts/10-blog.md)
+
 ## [9) Post Election Analysis](posts/09-blog.md)
 
 ## [8) Final Election Prediction](posts/08-blog.md)

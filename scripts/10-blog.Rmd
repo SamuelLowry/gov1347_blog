@@ -1,0 +1,74 @@
+---
+title: "Final Blog"
+author: "Samuel Lowry"
+date: "12/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(tidyverse)
+```
+
+```{r}
+#Data cleaning
+
+#2016 data
+sixteen_df <- read_csv("../data/countypres_2000-2016.csv") %>% 
+  filter(year == 2016,
+         #just top two
+         candidate %in% c("Donald Trump", "Hillary Clinton"),
+         #states in question
+         state %in% c("Georgia", "Michigan", "Wisconsin")) %>% 
+  #standardize county naming
+  mutate(x = " County",
+         county = str_c(county,x)) %>% 
+  #renames
+  rename(candidate_county_total = candidatevotes,
+         county_total = totalvotes) %>% 
+  select(year, state, county, candidate, candidate_county_total, county_total) 
+
+#getting state totals
+state16_df <- sixteen_df %>% 
+  group_by(state, candidate) %>% 
+  summarize(candidate_state_total = sum(candidate_county_total)) %>% 
+  group_by(state) %>% 
+  nest() %>% 
+  mutate(state_total = map(data, ~ sum(.x$candidate_state_total))) %>% 
+  unnest()
+
+#joining
+sixteen_df <- sixteen_df %>% 
+  right_join(state16_df)
+
+#2020 data
+twenty_df <- read_csv("../data/president_county_candidate.csv") %>% 
+  filter(candidate %in% c("Donald Trump", "Joe Biden"),
+         #states and candidates
+         state %in% c("Georgia", "Michigan", "Wisconsin")) %>% 
+  mutate(year = 2020) %>% 
+  #rename and add year
+rename(candidate_county_total = total_votes) %>% 
+  select(-won, -party)
+
+#county totals
+countytotals20_df <- twenty_df %>% 
+  group_by(state, county) %>% 
+  summarize(county_total = sum(candidate_county_total))
+
+#state totals
+state20_df <- twenty_df %>% 
+  group_by(state, candidate) %>% 
+  summarize(candidate_state_total = sum(candidate_county_total)) %>% 
+  group_by(state) %>% 
+  nest() %>% 
+  mutate(state_total = map(data, ~ sum(.x$candidate_state_total))) %>% 
+  unnest()
+
+#join up!
+twenty_df <- twenty_df %>%
+  right_join(countytotals20_df) %>% 
+  right_join(state20_df)
+```
+
