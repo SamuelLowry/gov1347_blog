@@ -1,4 +1,4 @@
-# Who Flipped Those States?
+# Urban vs. Suburban
 ## December 10, 2020
 
 For your blog post, you should:
@@ -25,6 +25,8 @@ This may be longer than a typical blog post.
 ![](../figures/michigan_pctnew.png)
 
 ![](../figures/georgia_pctnew.png)
+
+![](../figures/ga_mi_tb.png)
 
 
 At the beginning of my election prediction, I deemed this year the battle of the polls. As Nate Silver wrote right before the election, ["Trump Can Still Win, But The Polls Would Have To Be Off By Way More Than In 2016."](https://fivethirtyeight.com/features/trump-can-still-win-but-the-polls-would-have-to-be-off-by-way-more-than-in-2016/) The polls were still off resulting in surprise Trump victories in Florida and North Carolina as well as nail-biting, close races in Wisconsin and Georgia. Nevertheless, they were not off enough to grant Trump victory.

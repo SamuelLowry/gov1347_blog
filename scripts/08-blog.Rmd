@@ -1066,6 +1066,3 @@ ec_dist_clean_df %>%
 #save plot
 ggsave("../figures/ec_total.png", height = 5, width = 7)
 ```
-
-
-
