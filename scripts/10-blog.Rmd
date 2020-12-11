@@ -9,6 +9,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(stringr)
 library(tidyverse)
+library(ggthemes)
+library(usmap)
+library(maptools)
+library(janitor)
+library(readxl)
+library(huxtable)
 ```
 
 ```{r}
@@ -20,37 +26,44 @@ sixteen_df <- read_csv("../data/countypres_2000-2016.csv") %>%
          #just top two
          candidate %in% c("Donald Trump", "Hillary Clinton"),
          #states in question
-         state %in% c("Georgia", "Michigan", "Wisconsin")) %>% 
+         state %in% c("Georgia", "Michigan")) %>% 
   #standardize county naming
   mutate(x = " County",
          county = str_c(county,x)) %>% 
   #renames
   rename(candidate_county_total = candidatevotes,
-         county_total = totalvotes) %>% 
-  select(year, state, county, candidate, candidate_county_total, county_total) 
+         county_total = totalvotes,
+         fips = FIPS) %>% 
+  select(state, county, fips, party, candidate_county_total) 
 
 #getting state totals
 state16_df <- sixteen_df %>% 
-  group_by(state, candidate) %>% 
+  group_by(state, party) %>% 
   summarize(candidate_state_total = sum(candidate_county_total)) %>% 
   group_by(state) %>% 
   nest() %>% 
   mutate(state_total = map(data, ~ sum(.x$candidate_state_total))) %>% 
   unnest()
 
+#county totals
+countytotals16_df <- sixteen_df %>% 
+  group_by(state, county) %>% 
+  summarize(county_total = sum(candidate_county_total))
+
 #joining
 sixteen_df <- sixteen_df %>% 
-  right_join(state16_df)
+  right_join(state16_df) %>% 
+  right_join(countytotals16_df)
 
 #2020 data
 twenty_df <- read_csv("../data/president_county_candidate.csv") %>% 
   filter(candidate %in% c("Donald Trump", "Joe Biden"),
          #states and candidates
-         state %in% c("Georgia", "Michigan", "Wisconsin")) %>% 
-  mutate(year = 2020) %>% 
+         state %in% c("Georgia", "Michigan")) %>% 
+  mutate(party = if_else(candidate == "Donald Trump", "republican", "democrat")) %>% 
   #rename and add year
 rename(candidate_county_total = total_votes) %>% 
-  select(-won, -party)
+  select(-won, -candidate)
 
 #county totals
 countytotals20_df <- twenty_df %>% 
@@ -59,7 +72,7 @@ countytotals20_df <- twenty_df %>%
 
 #state totals
 state20_df <- twenty_df %>% 
-  group_by(state, candidate) %>% 
+  group_by(state, party) %>% 
   summarize(candidate_state_total = sum(candidate_county_total)) %>% 
   group_by(state) %>% 
   nest() %>% 
@@ -70,5 +83,178 @@ state20_df <- twenty_df %>%
 twenty_df <- twenty_df %>%
   right_join(countytotals20_df) %>% 
   right_join(state20_df)
+
 ```
+
+```{r}
+#classification data 
+class_df <- read_xlsx(path = "../data/NCHSURCodes2013.xlsx") %>% 
+  clean_names() %>% 
+  rename(fips = fips_code,
+         Type = x2013_code) %>% 
+  select(fips, Type) %>% 
+  #shift for regression
+  mutate(Type = Type - 1)
+
+all_df <- twenty_df %>% 
+  right_join(sixteen_df,
+             by = c("state", "county", "party"),
+             suffix = c("_20", "_16")) %>% 
+  mutate(wm_20 = (candidate_county_total_20/county_total_20) - .5,
+         wm_16 = (candidate_county_total_16/county_total_16) - .5,
+         increase = wm_20 - wm_16) %>% 
+  mutate(new_voters = candidate_county_total_20 - candidate_county_total_16) %>% 
+  mutate(pct_new_voters = new_voters/candidate_county_total_20) %>% 
+  left_join(class_df)
+
+#for states and party
+ga_dem_all_df <- all_df %>% 
+  filter(party == "democrat",
+         state == "Georgia")
+
+mi_dem_all_df <- all_df %>% 
+  filter(party == "democrat",
+         state == "Michigan")
+```
+
+```{r}
+
+#GA increase in dem margin
+plot_usmap(regions = "counties",
+           data = ga_dem_all_df,
+           values = "increase",
+           include = c("GA"))+
+  scale_fill_gradient2(high = "blue", mid = "white", low = "red",
+    name = "Change in\nWin Margin") + 
+  labs(title = "Change in Democratic Win Margin",
+       subtitle = "2016 to 2020") +
+  theme(plot.title = element_text(size = 25, face = "bold")) +
+  theme(plot.subtitle = element_text(size = 20)) +
+  theme(legend.title = element_text(size = 15),
+        legend.text = element_text(size = 10)) +
+  theme(plot.caption = element_text(size = 15))
+
+#save plot
+ggsave(filename = "../figures/georgia_delta.png", 
+       height = 6,
+       width = 8)
+
+#MI increase in dem margin
+plot_usmap(regions = "counties",
+           data = mi_dem_all_df,
+           values = "increase",
+           include = c("MI"))+
+  scale_fill_gradient2(high = "blue", mid = "white", low = "red",
+     name = "Change in\nWin Margin") + 
+  labs(title = "Change in Democratic Win Margin",
+       subtitle = "2016 to 2020") +
+  theme(plot.title = element_text(size = 25, face = "bold")) +
+  theme(plot.subtitle = element_text(size = 20)) +
+  theme(legend.title = element_text(size = 15),
+        legend.text = element_text(size = 10)) +
+  theme(plot.caption = element_text(size = 15))
+
+#save plot
+ggsave(filename = "../figures/michigan_delta.png", 
+       height = 6,
+       width = 8)
+
+```
+
+```{r}
+#GA increase in dem voters
+plot_usmap(regions = "counties",
+           data = ga_dem_all_df,
+           values = "new_voters",
+           include = c("GA"))+
+  scale_fill_gradient2(high = "blue", mid = "white", low = "red",
+    name = "Change in\nDem Voters") + 
+  labs(title = "Change in Democratic Voters",
+       subtitle = "2016 to 2020") +
+  theme(plot.title = element_text(size = 25, face = "bold")) +
+  theme(plot.subtitle = element_text(size = 20)) +
+  theme(legend.title = element_text(size = 15),
+        legend.text = element_text(size = 10)) +
+  theme(plot.caption = element_text(size = 15))
+
+#save plot
+ggsave(filename = "../figures/georgia_new.png", 
+       height = 6,
+       width = 8)
+
+#MI increase in dem voters
+plot_usmap(regions = "counties",
+           data = mi_dem_all_df,
+           values = "new_voters",
+           include = c("MI"))+
+  scale_fill_gradient2(high = "blue", mid = "white", low = "red",
+   name = "Change in\nDem Voters") + 
+  labs(title = "Change in Democratic Voters",
+       subtitle = "2016 to 2020") +
+  theme(plot.title = element_text(size = 25, face = "bold")) +
+  theme(plot.subtitle = element_text(size = 20)) +
+  theme(legend.title = element_text(size = 15),
+        legend.text = element_text(size = 10)) +
+  theme(plot.caption = element_text(size = 15))
+
+#save plot
+ggsave(filename = "../figures/michigan_new.png", 
+       height = 6,
+       width = 8)
+```
+
+```{r}
+#GA increase in dem voters pct
+plot_usmap(regions = "counties",
+           data = ga_dem_all_df,
+           values = "pct_new_voters",
+           include = c("GA"))+
+  scale_fill_gradient2(high = "blue", mid = "white", low = "red",
+    name = "Percent") + 
+  labs(title = "Percent Additional Voters",
+       subtitle = "By County") +
+  theme(plot.title = element_text(size = 25, face = "bold")) +
+  theme(plot.subtitle = element_text(size = 20)) +
+  theme(legend.title = element_text(size = 15),
+        legend.text = element_text(size = 10)) +
+  theme(plot.caption = element_text(size = 15))
+
+#save plot
+ggsave(filename = "../figures/georgia_pctnew.png", 
+       height = 6,
+       width = 8)
+
+#MI increase in dem voters ct
+plot_usmap(regions = "counties",
+           data = mi_dem_all_df,
+           values = "pct_new_voters",
+           include = c("MI"))+
+  scale_fill_gradient2(high = "blue", mid = "white", low = "red",
+  name = "Percent") + 
+   labs(title = "Percent Additional Voters",
+       subtitle = "By County") +
+  theme(plot.title = element_text(size = 25, face = "bold")) +
+  theme(plot.subtitle = element_text(size = 20)) +
+  theme(legend.title = element_text(size = 15),
+        legend.text = element_text(size = 10)) +
+  theme(plot.caption = element_text(size = 15))
+
+#save plot
+ggsave(filename = "../figures/michigan_pctnew.png", 
+       height = 6,
+       width = 8)
+```
+
+```{r}
+ga_inc_mod <- lm(formula = increase ~ Type, data = ga_dem_all_df)
+
+ga_pct_mod <- lm(formula = pct_new_voters ~ Type, data = ga_dem_all_df)
+
+mi_inc_mod <- lm(formula = increase ~ Type, data = mi_dem_all_df)
+
+mi_pct_mod <- lm(formula = pct_new_voters ~ Type, data = mi_dem_all_df)
+
+huxreg("GA WMI" = ga_inc_mod, "MI WMI" = mi_inc_mod, "GA VI" = ga_pct_mod, "MI VI" = mi_pct_mod)
+```
+
 
